@@ -18,6 +18,7 @@ namespace IdentityModel.OidcClient
         public string Scope { get; }
         public string RedirectUri { get; }
         public IWebView WebView { get; }
+
         public Flow Flow { get; set; } = Flow.Hybrid;
         public bool UseFormPost { get; set; } = true;
         public bool LoadProfile { get; set; } = true;

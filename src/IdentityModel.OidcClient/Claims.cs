@@ -19,5 +19,10 @@ namespace IdentityModel.OidcClient
         {
             return this.FirstOrDefault(c => c.Type == claimType);
         }
+
+        public Claims FindAll(string claimType)
+        {
+            return this.Where(c => c.Type == claimType).ToClaims();
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace IdentityModel.OidcClient.WebView
     {
         public string StartUrl { get; }
         public string EndUrl { get; }
+
         public ResponseMode ResponseMode { get; set; } = ResponseMode.FormPost;
         public DisplayMode InitialDisplayMode { get; set; } = DisplayMode.Visible;
         public int Timeout { get; set; } = 10;
