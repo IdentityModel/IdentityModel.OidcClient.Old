@@ -11,13 +11,14 @@ namespace IdentityModel.OidcClient
 {
     public class OidcClientOptions
     {
-        private readonly Lazy<Task<Endpoints>> _endpoints;
+        private readonly Lazy<Task<ProviderInformation>> _providerInfo;
 
         public string ClientId { get; }
         public string ClientSecret { get; }
         public string Scope { get; }
         public string RedirectUri { get; }
         public IWebView WebView { get; }
+        public IIdentityTokenValidator IdentityTokenValidator { get; }
 
         public Flow Flow { get; set; } = Flow.Hybrid;
         public bool UseFormPost { get; set; } = true;
@@ -38,40 +39,43 @@ namespace IdentityModel.OidcClient
             JwtClaimTypes.AccessTokenHash
         };
 
-        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IWebView webView)
+        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
         {
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
             if (string.IsNullOrWhiteSpace(scope)) throw new ArgumentNullException(nameof(scope));
             if (string.IsNullOrWhiteSpace(redirectUri)) throw new ArgumentNullException(nameof(redirectUri));
             if (webView == null) throw new ArgumentNullException(nameof(webView));
+            if (validator == null) throw new ArgumentNullException(nameof(validator));
 
             ClientId = clientId;
             ClientSecret = clientSecret;
             Scope = scope;
             RedirectUri = redirectUri;
             WebView = webView;
+            IdentityTokenValidator = validator;
         }
-        public OidcClientOptions(Endpoints endpoints, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView)
-            : this(clientId, clientSecret, scope, redirectUri, webView)
+
+        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
+            : this(clientId, clientSecret, scope, redirectUri, webView, validator)
         {
-            if (endpoints == null) throw new ArgumentNullException(nameof(endpoints));
-            endpoints.Validate();
+            if (info == null) throw new ArgumentNullException(nameof(info));
+            info.Validate();
 
-            _endpoints = new Lazy<Task<Endpoints>>(() => Task.FromResult(endpoints));
+            _providerInfo = new Lazy<Task<ProviderInformation>>(() => Task.FromResult(info));
         }
 
-        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView)
-            : this(clientId, clientSecret, scope, redirectUri, webView)
+        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
+            : this(clientId, clientSecret, scope, redirectUri, webView, validator)
         {
             if (string.IsNullOrWhiteSpace(authority)) throw new ArgumentNullException(nameof(authority));
 
-            _endpoints = new Lazy<Task<Endpoints>>(async () => await Endpoints.LoadFromMetadataAsync(authority));
+            _providerInfo = new Lazy<Task<ProviderInformation>>(async () => await ProviderInformation.LoadFromMetadataAsync(authority));
         }
 
-        public async Task<Endpoints> GetEndpointsAsync()
+        public async Task<ProviderInformation> GetProviderInformationAsync()
         {
-            return await _endpoints.Value;
+            return await _providerInfo.Value;
         }
     }
 }

@@ -58,7 +58,7 @@ namespace IdentityModel.OidcClient
 
         public async Task EndSessionAsync(string identityToken = null, bool trySilent = true)
         {
-            string url = (await _options.GetEndpointsAsync()).EndSession;
+            string url = (await _options.GetProviderInformationAsync()).EndSession;
 
             if (!string.IsNullOrWhiteSpace(identityToken))
             {
@@ -103,7 +103,7 @@ namespace IdentityModel.OidcClient
 
         private async Task<string> CreateUrlAsync(AuthorizeResult result, string codeChallenge, object extraParameters)
         {
-            var request = new AuthorizeRequest((await _options.GetEndpointsAsync()).Authorize);
+            var request = new AuthorizeRequest((await _options.GetProviderInformationAsync()).Authorize);
             var url = request.CreateAuthorizeUrl(
                 clientId: _options.ClientId,
                 responseType: OidcConstants.ResponseTypes.CodeIdToken,

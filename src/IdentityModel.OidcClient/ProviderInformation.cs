@@ -10,11 +10,13 @@ using System.Threading.Tasks;
 
 namespace IdentityModel.OidcClient
 {
-    public class Endpoints
+    public class ProviderInformation
     {
+        public string IssuerName { get; set; }
+        //public JObject KeySet { get; set; }
+
         public string Token { get; set; }
         public string Authorize { get; set; }
-        public string IdentityTokenValidation { get; set; }
         public string EndSession { get; set; }
         public string UserInfo { get; set; }
 
@@ -24,7 +26,7 @@ namespace IdentityModel.OidcClient
             if (string.IsNullOrEmpty(Authorize)) throw new InvalidOperationException("Missing authorize endpoint.");
         }
 
-        public static async Task<Endpoints> LoadFromMetadataAsync(string authority)
+        public static async Task<ProviderInformation> LoadFromMetadataAsync(string authority)
         {
             var client = new HttpClient();
             var url = authority.EnsureTrailingSlash() + ".well-known/openid-configuration";
@@ -33,18 +35,18 @@ namespace IdentityModel.OidcClient
 
             var doc = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
 
-            var endpoints = new Endpoints
+            var info = new ProviderInformation
             {
+                IssuerName = doc["issuer"].ToString(),
                 Authorize = doc["authorization_endpoint"].ToString(),
                 Token = doc["token_endpoint"].ToString(),
                 EndSession = doc["end_session_endpoint"].ToString(),
                 UserInfo = doc["userinfo_endpoint"].ToString(),
             };
 
-            // todo: replace with local validation
-            endpoints.IdentityTokenValidation = authority.EnsureTrailingSlash() + "connect/identitytokenvalidation";
+            // todo: load jwks endpoint
 
-            return endpoints;
+            return info;
         }
     }
 }

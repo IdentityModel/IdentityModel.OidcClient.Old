@@ -49,17 +49,20 @@ namespace IdentityModel.OidcClient
 
         private async Task<LoginResult> ValidateAsync(AuthorizeResult result)
         {
-            // validate identity token
-            var claims = await ValidateIdentityTokenAsync(result.IdentityToken);
-            if (claims == null)
+            // validate identity token signture
+            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(result.IdentityToken);
+
+            if (validationResult.Success == false)
             {
                 return new LoginResult
                 {
                     Success = false,
-                    Error = "identity token validation error"
+                    Error = validationResult.Error ?? "identity token validation error"
                 };
             }
 
+            var claims = validationResult.Claims;
+            
             // validate nonce
             var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
             if (!string.Equals(result.Nonce, tokenNonce))
@@ -108,10 +111,10 @@ namespace IdentityModel.OidcClient
                 };
             }
 
-            var endpoints = await _options.GetEndpointsAsync();
+            var providerInfo = await _options.GetProviderInformationAsync();
 
             // get access token
-            var tokenClient = new TokenClient(endpoints.Token, _options.ClientId, _options.ClientSecret);
+            var tokenClient = new TokenClient(providerInfo.Token, _options.ClientId, _options.ClientSecret);
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
                 result.Code, 
                 result.RedirectUri, 
@@ -129,7 +132,7 @@ namespace IdentityModel.OidcClient
             // get profile if enabled
             if (_options.LoadProfile)
             {
-                var userInfoClient = new UserInfoClient(new Uri(endpoints.UserInfo), tokenResult.AccessToken);
+                var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfo), tokenResult.AccessToken);
                 var userInfoResponse = await userInfoClient.GetAsync();
 
                 var primaryClaimTypes = claims.Select(c => c.Type).Distinct();
@@ -144,7 +147,7 @@ namespace IdentityModel.OidcClient
             return new LoginResult
             {
                 Success = true,
-                Claims = FilterProtocolClaims(claims),
+                Claims = FilterClaims(claims),
                 AccessToken = tokenResult.AccessToken,
                 RefreshToken = tokenResult.RefreshToken,
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
@@ -153,50 +156,7 @@ namespace IdentityModel.OidcClient
             };
         }
 
-        private async Task<Claims> ValidateIdentityTokenAsync(string identityToken)
-        {
-            var client = new HttpClient();
-
-            var form = new Dictionary<string, string>
-            {
-                { "token", identityToken },
-                { "client_id", _options.ClientId }
-            };
-
-            var response = await client.PostAsync(
-                new Uri((await _options.GetEndpointsAsync()).IdentityTokenValidation),
-                new FormUrlEncodedContent(form));
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var json = JObject.Parse(await response.Content.ReadAsStringAsync());
-
-            var claims = new Claims();
-
-            foreach (var x in json)
-            {
-                var array = x.Value as JArray;
-
-                if (array != null)
-                {
-                    foreach (var item in array)
-                    {
-                        claims.Add(new Claim(x.Key, item.ToString()));
-                    }
-                }
-                else
-                {
-                    claims.Add(new Claim(x.Key, x.Value.ToString()));
-                }
-            }
-
-            return claims;
-        }
-
-        private Claims FilterProtocolClaims(Claims claims)
+        private Claims FilterClaims(Claims claims)
         {
             if (_options.FilterClaims)
             {

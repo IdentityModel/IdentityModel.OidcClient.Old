@@ -41,8 +41,9 @@
     <Compile Include="Claim.cs" />
     <Compile Include="Claims.cs" />
     <Compile Include="ClaimsExtensions.cs" />
-    <Compile Include="Endpoints.cs" />
+    <Compile Include="ProviderInformation.cs" />
     <Compile Include="Flow.cs" />
+    <Compile Include="IdentityTokenValidation\IIdentityTokenValidator.cs" />
     <Compile Include="LoginResult.cs" />
     <Compile Include="OidcClient.cs" />
     <Compile Include="OidcClientOptions.cs" />
@@ -50,6 +51,8 @@
     <Compile Include="OidcTokenManagerState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
+    <Compile Include="IdentityTokenValidation\EndpointIdentityTokenValidator.cs" />
+    <Compile Include="IdentityTokenValidation\IdentityTokenValidationResult.cs" />
     <Compile Include="WebView\DisplayMode.cs" />
     <Compile Include="WebView\HiddenModeFailedEventArgs.cs" />
     <Compile Include="WebView\InvokeOptions.cs" />
