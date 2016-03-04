@@ -65,7 +65,7 @@ namespace IdentityModel.OidcClient
             
             // validate nonce
             var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
-            if (!string.Equals(result.Nonce, tokenNonce))
+            if (!string.Equals(result.State.Nonce, tokenNonce))
             {
                 return new LoginResult
                 {
@@ -117,8 +117,8 @@ namespace IdentityModel.OidcClient
             var tokenClient = new TokenClient(providerInfo.Token, _options.ClientId, _options.ClientSecret);
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
                 result.Code, 
-                result.RedirectUri, 
-                codeVerifier: result.Verifier);
+                result.State.RedirectUri, 
+                codeVerifier: result.State.CodeVerifier);
 
             if (tokenResult.IsError || tokenResult.IsHttpError)
             {

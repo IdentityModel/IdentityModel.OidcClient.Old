@@ -11,9 +11,7 @@ namespace IdentityModel.OidcClient
 
         public string IdentityToken { get; set; }
         public string Code { get; set; }
-        public string RedirectUri { get; set; }
 
-        public string Nonce { get; set; }
-        public string Verifier { get; set; }
+        public AuthorizeState State { get; set; }
     }
 }

@@ -12,9 +12,9 @@ if ($exists -eq $false) {
 
 .\nuget.exe install psake -ExcludeVersion -o packages -nocache
 
-gci .\source -Recurse "packages.config" |% {
+gci .\src -Recurse "packages.config" |% {
 	"Restoring " + $_.FullName
-	.\nuget.exe install $_.FullName -o .\source\packages
+	.\nuget.exe install $_.FullName -o .\packages
 }
 
 Import-Module .\packages\psake\tools\psake.psm1

@@ -21,20 +21,14 @@ namespace IdentityModel.OidcClient
             _options = options;
         }
 
-        public async Task<AuthorizeResult> AuthorizeAsync(bool trySilent = false, object extraParameters = null)
+        public async Task<AuthorizeState> StartAuthorizeAsync(bool trySilent = false, object extaParameters = null)
         {
-            InvokeResult wviResult;
-            AuthorizeResult result = new AuthorizeResult
-            {
-                IsError = true,
-            };
+            var state = await CreateAuthorizeStateAsync();
 
-            // todo: replace with CryptoRandom
-            result.Nonce = Guid.NewGuid().ToString("N");
-            result.RedirectUri = _options.RedirectUri;
-            string codeChallenge = CreateCodeChallenge(result);
-            var url = await CreateUrlAsync(result, codeChallenge, extraParameters);
-            var webViewOptions = new InvokeOptions(url, _options.RedirectUri);
+            // start webview
+            // return state
+
+            var webViewOptions = new InvokeOptions(state.StartUrl, _options.RedirectUri);
             if (trySilent)
             {
                 webViewOptions.InitialDisplayMode = DisplayMode.Hidden;
@@ -44,7 +38,30 @@ namespace IdentityModel.OidcClient
                 webViewOptions.ResponseMode = ResponseMode.FormPost;
             }
 
-            // try silent mode if requested
+            return null;
+        }
+
+        public async Task<AuthorizeResult> AuthorizeAsync(bool trySilent = false, object extraParameters = null)
+        {
+            InvokeResult wviResult;
+            AuthorizeResult result = new AuthorizeResult
+            {
+                IsError = true,
+            };
+
+            var state = await CreateAuthorizeStateAsync();
+            
+
+            var webViewOptions = new InvokeOptions(state.StartUrl, _options.RedirectUri);
+            if (trySilent)
+            {
+                webViewOptions.InitialDisplayMode = DisplayMode.Hidden;
+            }
+            if (_options.UseFormPost)
+            {
+                webViewOptions.ResponseMode = ResponseMode.FormPost;
+            }
+
             wviResult = await _options.WebView.InvokeAsync(webViewOptions);
 
             if (wviResult.ResultType == InvokeResultType.Success)
@@ -79,17 +96,29 @@ namespace IdentityModel.OidcClient
             var result = await _options.WebView.InvokeAsync(webViewOptions);
         }
 
-        private string CreateCodeChallenge(AuthorizeResult result)
+        private async Task<AuthorizeState> CreateAuthorizeStateAsync(object extraParameters = null)
+        {
+            var state = new AuthorizeState();
+
+            state.Nonce = Guid.NewGuid().ToString("N");
+            state.RedirectUri = _options.RedirectUri;
+
+            string codeChallenge = CreateCodeChallenge(state);
+            state.StartUrl = await CreateUrlAsync(state, codeChallenge, extraParameters);
+
+            return state;
+        }
+
+        private string CreateCodeChallenge(AuthorizeState state)
         {
             if (_options.UseProofKeys)
             {
-                // todo: replace with CryptoRandom
-                result.Verifier = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+                state.CodeVerifier = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
                 var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
 
                 var challengeBuffer = sha256.HashData(
                     CryptographicBuffer.CreateFromByteArray(
-                        Encoding.UTF8.GetBytes(result.Verifier)));
+                        Encoding.UTF8.GetBytes(state.CodeVerifier)));
                 byte[] challengeBytes;
 
                 CryptographicBuffer.CopyToByteArray(challengeBuffer, out challengeBytes);
@@ -101,16 +130,16 @@ namespace IdentityModel.OidcClient
             }
         }
 
-        private async Task<string> CreateUrlAsync(AuthorizeResult result, string codeChallenge, object extraParameters)
+        private async Task<string> CreateUrlAsync(AuthorizeState state, string codeChallenge, object extraParameters)
         {
             var request = new AuthorizeRequest((await _options.GetProviderInformationAsync()).Authorize);
             var url = request.CreateAuthorizeUrl(
                 clientId: _options.ClientId,
                 responseType: OidcConstants.ResponseTypes.CodeIdToken,
                 scope: _options.Scope,
-                redirectUri: result.RedirectUri,
+                redirectUri: state.RedirectUri,
                 responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
-                nonce: result.Nonce,
+                nonce: state.Nonce,
                 codeChallenge: codeChallenge,
                 codeChallengeMethod: _options.UseProofKeys ? OidcConstants.CodeChallengeMethods.Sha256 : null,
                 extra: extraParameters);
