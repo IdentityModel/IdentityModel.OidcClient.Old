@@ -22,7 +22,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\build\</OutputPath>
+    <OutputPath>..\..\build\portable\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -30,37 +30,13 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\build\</OutputPath>
+    <OutputPath>..\..\build\portable\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AuthorizeClient.cs" />
-    <Compile Include="AuthorizeResult.cs" />
-    <Compile Include="AuthorizeState.cs" />
-    <Compile Include="Claim.cs" />
-    <Compile Include="Claims.cs" />
-    <Compile Include="ClaimsExtensions.cs" />
-    <Compile Include="ProviderInformation.cs" />
-    <Compile Include="Flow.cs" />
-    <Compile Include="IdentityTokenValidation\IIdentityTokenValidator.cs" />
-    <Compile Include="LoginResult.cs" />
-    <Compile Include="OidcClient.cs" />
-    <Compile Include="OidcClientOptions.cs" />
-    <Compile Include="OidcTokenManager.cs" />
-    <Compile Include="OidcTokenManagerState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Infrastructure\StringExtensions.cs" />
-    <Compile Include="IdentityTokenValidation\EndpointIdentityTokenValidator.cs" />
-    <Compile Include="IdentityTokenValidation\IdentityTokenValidationResult.cs" />
-    <Compile Include="WebView\DisplayMode.cs" />
-    <Compile Include="WebView\HiddenModeFailedEventArgs.cs" />
-    <Compile Include="WebView\InvokeOptions.cs" />
-    <Compile Include="WebView\InvokeResult.cs" />
-    <Compile Include="WebView\InvokeResultType.cs" />
-    <Compile Include="WebView\IWebView.cs" />
-    <Compile Include="WebView\ResponseMode.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="IdentityModel, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -99,6 +75,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Project="..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

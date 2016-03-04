@@ -1,0 +1,15 @@
+version: 1.0.{build}
+branches:
+  only:
+  - dev
+build_script:
+- ps: ./build.ps1
+artifacts:
+- path: distribution/*.nupkg
+deploy:
+- provider: NuGet
+  server: https://www.myget.org/F/identity/
+  api_key:
+    secure: 43SK7fLJcrno252Wqb6j+jFYeTjaHG8EWXruhHv6kW+bbySa4uBGTPNFjA7lzD0Y
+  on:
+    branch: dev

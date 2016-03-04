@@ -5,7 +5,16 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel.OidcClient", "src\IdentityModel.OidcClient\IdentityModel.OidcClient.csproj", "{D85E9818-2943-41C2-AE22-5DB0DE061997}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel.OidcClient.Net", "src\IdentityModel.OidcClient.Net\IdentityModel.OidcClient.Net.csproj", "{C3FF5628-3E85-4957-BA55-DAD8E999D51C}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared", "src\Shared\Shared.shproj", "{A1C5566B-C8FD-412F-AB75-050461F4962C}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		src\Shared\Shared.projitems*{d85e9818-2943-41c2-ae22-5db0de061997}*SharedItemsImports = 4
+		src\Shared\Shared.projitems*{c3ff5628-3e85-4957-ba55-dad8e999d51c}*SharedItemsImports = 4
+		src\Shared\Shared.projitems*{a1c5566b-c8fd-412f-ab75-050461f4962c}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -15,6 +24,10 @@ Global
 		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

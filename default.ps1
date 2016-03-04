@@ -8,7 +8,7 @@ properties {
 	$nuget_path = "$base_directory\nuget.exe"
 
 	$buildNumber = 0;
-	$version = "1.8.0.0"
+	$version = "1.0.0.0"
 	$preRelease = $null
 }
 
@@ -62,12 +62,15 @@ task CreateNuGetPackage -depends Compile {
 	}
 
 	new-item $dist_directory -type directory
-
 	copy-item $base_directory\IdentityModel.OidcClient.nuspec $dist_directory
+    
+    new-item $dist_directory\lib\net45 -type directory
+	copy-item $output_directory\net\IdentityModel.OidcClient.dll $dist_directory\lib\net45\
+	copy-item $output_directory\net\IdentityModel.OidcClient.pdb $dist_directory\lib\net45\
 
 	new-item $dist_directory\lib\portable-net45+wp80+win8+wpa81 -type directory
-	copy-item $output_directory\IdentityModel.OidcClient.dll $dist_directory\lib\portable-net45+wp80+win8+wpa81\
-	copy-item $output_directory\IdentityModel.OidcClient.pdb $dist_directory\lib\portable-net45+wp80+win8+wpa81\
+	copy-item $output_directory\portable\IdentityModel.OidcClient.dll $dist_directory\lib\portable-net45+wp80+win8+wpa81\
+	copy-item $output_directory\portable\IdentityModel.OidcClient.pdb $dist_directory\lib\portable-net45+wp80+win8+wpa81\
 
 	exec { . $nuget_path pack $dist_directory\IdentityModel.OidcClient.nuspec -BasePath $dist_directory -o $dist_directory -version $packageVersion }
 }
