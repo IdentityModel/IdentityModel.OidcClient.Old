@@ -28,6 +28,11 @@ namespace IdentityModel.OidcClient
 
         public async Task<AuthorizeResult> AuthorizeAsync(bool trySilent = false, object extraParameters = null)
         {
+            if (_options.WebView == null)
+            {
+                throw new InvalidOperationException("No web view configured.");
+            }
+
             InvokeResult wviResult;
             AuthorizeResult result = new AuthorizeResult
             {
