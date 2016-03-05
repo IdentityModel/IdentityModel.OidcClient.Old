@@ -12,11 +12,13 @@ namespace IdentityModel.OidcClient
 {
     public class EndpointIdentityTokenValidator : IIdentityTokenValidator
     {
-        string _endpoint;
+        private readonly string _clientId;
+        private readonly string _endpoint;
 
-        public EndpointIdentityTokenValidator(string authority)
+        public EndpointIdentityTokenValidator(string authority, string clientId)
         {
             _endpoint = authority.EnsureTrailingSlash() + "connect/identitytokenvalidation";
+            _clientId = clientId;
         }
 
         public async Task<IdentityTokenValidationResult> ValidateAsync(string identityToken)
@@ -25,7 +27,8 @@ namespace IdentityModel.OidcClient
 
             var form = new Dictionary<string, string>
             {
-                { "token", identityToken }
+                { "token", identityToken },
+                { "client_id", _clientId }
             };
 
             var response = await client.PostAsync(
