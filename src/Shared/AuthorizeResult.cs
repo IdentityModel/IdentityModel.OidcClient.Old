@@ -9,9 +9,7 @@ namespace IdentityModel.OidcClient
         public bool IsError { get; set; }
         public string Error { get; set; }
 
-        public string IdentityToken { get; set; }
-        public string Code { get; set; }
-
+        public string Data { get; set; }
         public AuthorizeState State { get; set; }
     }
 }

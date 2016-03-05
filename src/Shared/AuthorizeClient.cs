@@ -21,24 +21,9 @@ namespace IdentityModel.OidcClient
             _options = options;
         }
 
-        public async Task<AuthorizeState> StartAuthorizeAsync(bool trySilent = false, object extaParameters = null)
+        public async Task<AuthorizeState> PrepareAuthorizeAsync(bool trySilent = false, object extaParameters = null)
         {
-            var state = await CreateAuthorizeStateAsync();
-
-            // start webview
-            // return state
-
-            var webViewOptions = new InvokeOptions(state.StartUrl, _options.RedirectUri);
-            if (trySilent)
-            {
-                webViewOptions.InitialDisplayMode = DisplayMode.Hidden;
-            }
-            if (_options.UseFormPost)
-            {
-                webViewOptions.ResponseMode = ResponseMode.FormPost;
-            }
-
-            return null;
+            return await CreateAuthorizeStateAsync(extaParameters);
         }
 
         public async Task<AuthorizeResult> AuthorizeAsync(bool trySilent = false, object extraParameters = null)
@@ -47,13 +32,11 @@ namespace IdentityModel.OidcClient
             AuthorizeResult result = new AuthorizeResult
             {
                 IsError = true,
-                State = await CreateAuthorizeStateAsync()
+                State = await CreateAuthorizeStateAsync(extraParameters)
             };
 
-            //var state = await CreateAuthorizeStateAsync();
-            
-
             var webViewOptions = new InvokeOptions(result.State.StartUrl, _options.RedirectUri);
+
             if (trySilent)
             {
                 webViewOptions.InitialDisplayMode = DisplayMode.Hidden;
@@ -67,7 +50,10 @@ namespace IdentityModel.OidcClient
 
             if (wviResult.ResultType == InvokeResultType.Success)
             {
-                return await ParseResponse(wviResult.Response, result);
+                result.IsError = false;
+                result.Data = wviResult.Response;
+
+                return result;
             }
 
             result.Error = wviResult.ResultType.ToString();
@@ -146,35 +132,6 @@ namespace IdentityModel.OidcClient
                 extra: extraParameters);
 
             return url;
-        }
-
-        private Task<AuthorizeResult> ParseResponse(string webViewResponse, AuthorizeResult result)
-        {
-            var response = new AuthorizeResponse(webViewResponse);
-
-            if (response.IsError)
-            {
-                result.Error = response.Error;
-                return Task.FromResult(result);
-            }
-
-            if (string.IsNullOrEmpty(response.Code))
-            {
-                result.Error = "Missing authorization code";
-                return Task.FromResult(result);
-            }
-
-            if (string.IsNullOrEmpty(response.IdentityToken))
-            {
-                result.Error = "Missing identity token";
-                return Task.FromResult(result);
-            }
-
-            result.IdentityToken = response.IdentityToken;
-            result.Code = response.Code;
-            result.IsError = false;
-
-            return Task.FromResult(result);
         }
     }
 }

@@ -36,7 +36,12 @@ namespace IdentityModel.OidcClient
                 };
             }
 
-            return await ValidateResponseAsync(authorizeResult);
+            return await ValidateResponseAsync(authorizeResult.Data, authorizeResult.State);
+        }
+
+        public async Task<AuthorizeState> PrepareLoginAsync(bool trySilent = false, object extraParameters = null)
+        {
+            return await _authorizeClient.PrepareAuthorizeAsync(trySilent, extraParameters);
         }
 
         public Task LogoutAsync(string identityToken = null, bool trySilent = true)
@@ -44,10 +49,31 @@ namespace IdentityModel.OidcClient
             return _authorizeClient.EndSessionAsync(identityToken, trySilent);
         }
 
-        private async Task<LoginResult> ValidateResponseAsync(AuthorizeResult result)
+        public async Task<LoginResult> ValidateResponseAsync(string data, AuthorizeState state)
         {
+            var result = new LoginResult { Success = false };
+            var response = new AuthorizeResponse(data);
+
+            if (response.IsError)
+            {
+                result.Error = response.Error;
+                return result;
+            }
+
+            if (string.IsNullOrEmpty(response.Code))
+            {
+                result.Error = "Missing authorization code";
+                return result;
+            }
+
+            if (string.IsNullOrEmpty(response.IdentityToken))
+            {
+                result.Error = "Missing identity token";
+                return result;
+            }
+
             // validate identity token signture
-            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(result.IdentityToken);
+            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(response.IdentityToken);
 
             if (validationResult.Success == false)
             {
@@ -62,7 +88,7 @@ namespace IdentityModel.OidcClient
             
             // validate nonce
             var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
-            if (!string.Equals(result.State.Nonce, tokenNonce))
+            if (!string.Equals(state.Nonce, tokenNonce))
             {
                 return new LoginResult
                 {
@@ -89,7 +115,7 @@ namespace IdentityModel.OidcClient
 
             var codeHash = sha256.HashData(
                 CryptographicBuffer.CreateFromByteArray(
-                    Encoding.UTF8.GetBytes(result.Code)));
+                    Encoding.UTF8.GetBytes(response.Code)));
 
             byte[] codeHashArray;
             CryptographicBuffer.CopyToByteArray(codeHash, out codeHashArray);
@@ -113,9 +139,9 @@ namespace IdentityModel.OidcClient
             // get access token
             var tokenClient = new TokenClient(providerInfo.Token, _options.ClientId, _options.ClientSecret);
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
-                result.Code, 
-                result.State.RedirectUri, 
-                codeVerifier: result.State.CodeVerifier);
+                response.Code, 
+                state.RedirectUri, 
+                codeVerifier: state.CodeVerifier);
 
             if (tokenResult.IsError || tokenResult.IsHttpError)
             {
@@ -148,7 +174,7 @@ namespace IdentityModel.OidcClient
                 AccessToken = tokenResult.AccessToken,
                 RefreshToken = tokenResult.RefreshToken,
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
-                IdentityToken = result.IdentityToken,
+                IdentityToken = response.IdentityToken,
                 AuthenticationTime = DateTime.Now
             };
         }
