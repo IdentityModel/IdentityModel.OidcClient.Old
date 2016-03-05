@@ -3,11 +3,8 @@
 
 
 using IdentityModel.Client;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using PCLCrypto;
@@ -39,7 +36,7 @@ namespace IdentityModel.OidcClient
                 };
             }
 
-            return await ValidateAsync(authorizeResult);
+            return await ValidateResponseAsync(authorizeResult);
         }
 
         public Task LogoutAsync(string identityToken = null, bool trySilent = true)
@@ -47,7 +44,7 @@ namespace IdentityModel.OidcClient
             return _authorizeClient.EndSessionAsync(identityToken, trySilent);
         }
 
-        private async Task<LoginResult> ValidateAsync(AuthorizeResult result)
+        private async Task<LoginResult> ValidateResponseAsync(AuthorizeResult result)
         {
             // validate identity token signture
             var validationResult = await _options.IdentityTokenValidator.ValidateAsync(result.IdentityToken);
