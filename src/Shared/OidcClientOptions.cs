@@ -39,13 +39,12 @@ namespace IdentityModel.OidcClient
             JwtClaimTypes.AccessTokenHash
         };
 
-        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
+        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator, IWebView webView = null)
         {
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
             if (string.IsNullOrWhiteSpace(scope)) throw new ArgumentNullException(nameof(scope));
             if (string.IsNullOrWhiteSpace(redirectUri)) throw new ArgumentNullException(nameof(redirectUri));
-            if (webView == null) throw new ArgumentNullException(nameof(webView));
             if (validator == null) throw new ArgumentNullException(nameof(validator));
 
             ClientId = clientId;
@@ -57,7 +56,7 @@ namespace IdentityModel.OidcClient
         }
 
         public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
-            : this(clientId, clientSecret, scope, redirectUri, webView, validator)
+            : this(clientId, clientSecret, scope, redirectUri, validator, webView)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
             info.Validate();
@@ -66,7 +65,7 @@ namespace IdentityModel.OidcClient
         }
 
         public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
-            : this(clientId, clientSecret, scope, redirectUri, webView, validator)
+            : this(clientId, clientSecret, scope, redirectUri, validator, webView)
         {
             if (string.IsNullOrWhiteSpace(authority)) throw new ArgumentNullException(nameof(authority));
 
