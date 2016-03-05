@@ -21,7 +21,7 @@ namespace IdentityModel.OidcClient
         public IIdentityTokenValidator IdentityTokenValidator { get; }
 
         public Flow Flow { get; set; } = Flow.Hybrid;
-        public bool UseFormPost { get; set; } = true;
+        public bool UseFormPost { get; set; } = false;
         public bool LoadProfile { get; set; } = true;
         public bool FilterClaims { get; set; } = true;
         public bool UseProofKeys { get; set; } = true;
