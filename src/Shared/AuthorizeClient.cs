@@ -47,12 +47,13 @@ namespace IdentityModel.OidcClient
             AuthorizeResult result = new AuthorizeResult
             {
                 IsError = true,
+                State = await CreateAuthorizeStateAsync()
             };
 
-            var state = await CreateAuthorizeStateAsync();
+            //var state = await CreateAuthorizeStateAsync();
             
 
-            var webViewOptions = new InvokeOptions(state.StartUrl, _options.RedirectUri);
+            var webViewOptions = new InvokeOptions(result.State.StartUrl, _options.RedirectUri);
             if (trySilent)
             {
                 webViewOptions.InitialDisplayMode = DisplayMode.Hidden;
