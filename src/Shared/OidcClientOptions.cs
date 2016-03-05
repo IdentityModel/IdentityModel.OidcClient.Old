@@ -55,7 +55,7 @@ namespace IdentityModel.OidcClient
             IdentityTokenValidator = validator;
         }
 
-        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
+        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator, IWebView webView = null)
             : this(clientId, clientSecret, scope, redirectUri, validator, webView)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
@@ -64,7 +64,7 @@ namespace IdentityModel.OidcClient
             _providerInfo = new Lazy<Task<ProviderInformation>>(() => Task.FromResult(info));
         }
 
-        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView, IIdentityTokenValidator validator)
+        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator, IWebView webView = null)
             : this(clientId, clientSecret, scope, redirectUri, validator, webView)
         {
             if (string.IsNullOrWhiteSpace(authority)) throw new ArgumentNullException(nameof(authority));
