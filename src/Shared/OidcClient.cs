@@ -72,7 +72,7 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            // validate identity token signture
+            // validate identity token signature
             var validationResult = await _options.IdentityTokenValidator.ValidateAsync(response.IdentityToken);
 
             if (validationResult.Success == false)
@@ -85,7 +85,7 @@ namespace IdentityModel.OidcClient
             }
 
             var claims = validationResult.Claims;
-            
+
             // validate nonce
             var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
             if (!string.Equals(state.Nonce, tokenNonce))
@@ -139,8 +139,8 @@ namespace IdentityModel.OidcClient
             // get access token
             var tokenClient = new TokenClient(providerInfo.Token, _options.ClientId, _options.ClientSecret);
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
-                response.Code, 
-                state.RedirectUri, 
+                response.Code,
+                state.RedirectUri,
                 codeVerifier: state.CodeVerifier);
 
             if (tokenResult.IsError || tokenResult.IsHttpError)
@@ -155,14 +155,21 @@ namespace IdentityModel.OidcClient
             // get profile if enabled
             if (_options.LoadProfile)
             {
-                var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfo), tokenResult.AccessToken);
-                var userInfoResponse = await userInfoClient.GetAsync();
+                var userInfoResult = await GetUserInfoAsync(tokenResult.AccessToken);
+
+                if (!userInfoResult.Success)
+                {
+                    return new LoginResult
+                    {
+                        Success = false,
+                        Error = userInfoResult.Error
+                    };
+                }
 
                 var primaryClaimTypes = claims.Select(c => c.Type).Distinct();
-
-                foreach (var claim in userInfoResponse.Claims.Where(c => !primaryClaimTypes.Contains(c.Item1)))
+                foreach (var claim in userInfoResult.Claims.Where(c => !primaryClaimTypes.Contains(c.Type)))
                 {
-                    claims.Add(new Claim(claim.Item1, claim.Item2));
+                    claims.Add(claim);
                 }
             }
 
@@ -176,6 +183,29 @@ namespace IdentityModel.OidcClient
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
                 IdentityToken = response.IdentityToken,
                 AuthenticationTime = DateTime.Now
+            };
+        }
+
+        public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
+        {
+            var providerInfo = await _options.GetProviderInformationAsync();
+
+            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfo), accessToken);
+            var userInfoResponse = await userInfoClient.GetAsync();
+
+            if (userInfoResponse.IsError)
+            {
+                return new UserInfoResult
+                {
+                    Success = false,
+                    Error = userInfoResponse.ErrorMessage
+                };
+            }
+
+            return new UserInfoResult
+            {
+                Success = true,
+                Claims = userInfoResponse.Claims.Select(c => new Claim(c.Item1, c.Item2)).ToClaims()
             };
         }
 

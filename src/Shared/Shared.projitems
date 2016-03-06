@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AuthorizeClient.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)AuthorizeResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AuthorizeState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Claim.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Claims.cs" />
@@ -19,13 +18,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\EndpointIdentityTokenValidator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\IdentityTokenValidationResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\IIdentityTokenValidator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\OidcTokenManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\OidcTokenManagerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\StringExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)LoginResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OidcClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OidcClientOptions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)OidcTokenManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)OidcTokenManagerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ProviderInformation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\AuthorizeResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\LoginResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\UserInfoResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\DisplayMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\HiddenModeFailedEventArgs.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\InvokeOptions.cs" />

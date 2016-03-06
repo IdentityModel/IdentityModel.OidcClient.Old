@@ -4,9 +4,11 @@
 
 namespace IdentityModel.OidcClient
 {
-    internal class OidcTokenManagerState
+    public class UserInfoResult
     {
-        internal OidcClientOptions Options { get; set; }
-        internal LoginResult LoginResult { get; set; }
+        public bool Success { get; set; }
+        public string Error { get; set; }
+
+        public Claims Claims { get; set; }
     }
 }
