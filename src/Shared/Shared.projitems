@@ -26,6 +26,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ProviderInformation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\AuthorizeResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\LoginResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\RefreshTokenResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\UserInfoResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\DisplayMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\HiddenModeFailedEventArgs.cs" />
