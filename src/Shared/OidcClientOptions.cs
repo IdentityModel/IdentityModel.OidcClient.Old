@@ -5,6 +5,7 @@
 using IdentityModel.OidcClient.WebView;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace IdentityModel.OidcClient
@@ -17,6 +18,7 @@ namespace IdentityModel.OidcClient
         public string ClientSecret { get; }
         public string Scope { get; }
         public string RedirectUri { get; }
+
         public IWebView WebView { get; }
         public IIdentityTokenValidator IdentityTokenValidator { get; }
 
@@ -25,6 +27,10 @@ namespace IdentityModel.OidcClient
         public bool LoadProfile { get; set; } = true;
         public bool FilterClaims { get; set; } = true;
         public bool UseProofKeys { get; set; } = true;
+
+        public TimeSpan WebViewTimeout { get; set; } = TimeSpan.FromSeconds(10);
+        public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(30);
+        public HttpMessageHandler BackchannelHandler { get; set; }
 
         public IList<string> FilteredClaims { get; set; } = new List<string>
         {

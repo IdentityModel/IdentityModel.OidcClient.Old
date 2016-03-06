@@ -40,18 +40,23 @@ namespace IdentityModel.OidcClient
                 State = await CreateAuthorizeStateAsync(extraParameters)
             };
 
-            var webViewOptions = new InvokeOptions(result.State.StartUrl, _options.RedirectUri);
+            var invokeOptions = new InvokeOptions(result.State.StartUrl, _options.RedirectUri);
+            invokeOptions.Timeout = _options.WebViewTimeout;
 
+            if (_options.UseFormPost)
+            {
+                invokeOptions.ResponseMode = ResponseMode.Redirect;
+            }
             if (trySilent)
             {
-                webViewOptions.InitialDisplayMode = DisplayMode.Hidden;
+                invokeOptions.InitialDisplayMode = DisplayMode.Hidden;
             }
             if (_options.UseFormPost)
             {
-                webViewOptions.ResponseMode = ResponseMode.FormPost;
+                invokeOptions.ResponseMode = ResponseMode.FormPost;
             }
 
-            wviResult = await _options.WebView.InvokeAsync(webViewOptions);
+            wviResult = await _options.WebView.InvokeAsync(invokeOptions);
 
             if (wviResult.ResultType == InvokeResultType.Success)
             {
@@ -77,7 +82,8 @@ namespace IdentityModel.OidcClient
 
             var webViewOptions = new InvokeOptions(url, _options.RedirectUri)
             {
-                ResponseMode = ResponseMode.Redirect
+                ResponseMode = ResponseMode.Redirect,
+                Timeout = _options.WebViewTimeout
             };
 
             if (trySilent)
