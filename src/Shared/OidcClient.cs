@@ -145,13 +145,8 @@ namespace IdentityModel.OidcClient
                 };
             }
 
-            // get access token
-            var tokenClient = new TokenClient(providerInfo.Token, _options.ClientId, _options.ClientSecret);
-            var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
-                response.Code,
-                state.RedirectUri,
-                codeVerifier: state.CodeVerifier);
-
+            // redeem code for tokens
+            var tokenResult = await RedeemCodeAsync(response.Code, state);
             if (tokenResult.IsError || tokenResult.IsHttpError)
             {
                 return new LoginResult
@@ -193,6 +188,19 @@ namespace IdentityModel.OidcClient
                 IdentityToken = response.IdentityToken,
                 AuthenticationTime = DateTime.Now
             };
+        }
+
+        private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
+        {
+            var endpoint = (await _options.GetProviderInformationAsync()).Token;
+
+            var tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
+            var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
+                code,
+                state.RedirectUri,
+                codeVerifier: state.CodeVerifier);
+
+            return tokenResult;
         }
 
         public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
