@@ -85,17 +85,7 @@ namespace IdentityModel.OidcClient
             }
 
             var claims = validationResult.Claims;
-
-            // validate nonce
-            var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
-            if (!string.Equals(state.Nonce, tokenNonce))
-            {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = "invalid nonce"
-                };
-            }
+            var providerInfo = await _options.GetProviderInformationAsync();
 
             // validate audience
             var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
@@ -108,9 +98,30 @@ namespace IdentityModel.OidcClient
                 };
             }
 
+            // validate issuer
+            var issuer = claims.FindFirst(JwtClaimTypes.Issuer)?.Value ?? "";
+            if (!string.Equals(providerInfo.IssuerName, issuer))
+            {
+                return new LoginResult
+                {
+                    Success = false,
+                    Error = "invalid issuer"
+                };
+            }
+
+            // validate nonce
+            var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
+            if (!string.Equals(state.Nonce, tokenNonce))
+            {
+                return new LoginResult
+                {
+                    Success = false,
+                    Error = "invalid nonce"
+                };
+            }
+
             // validate c_hash
             var cHash = claims.FindFirst(JwtClaimTypes.AuthorizationCodeHash)?.Value ?? "";
-
             var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
 
             var codeHash = sha256.HashData(
@@ -133,8 +144,6 @@ namespace IdentityModel.OidcClient
                     Error = "invalid code"
                 };
             }
-
-            var providerInfo = await _options.GetProviderInformationAsync();
 
             // get access token
             var tokenClient = new TokenClient(providerInfo.Token, _options.ClientId, _options.ClientSecret);
