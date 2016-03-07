@@ -13,7 +13,7 @@ namespace IdentityModel.OidcClient
     public class ProviderInformation
     {
         public string IssuerName { get; set; }
-        //public JObject KeySet { get; set; }
+        //public ?? KeySet { get; set; }
 
         public string TokenEndpoint { get; set; }
         public string AuthorizeEndpoint { get; set; }

@@ -22,7 +22,8 @@ namespace IdentityModel.OidcClient
         public IWebView WebView { get; }
         public IIdentityTokenValidator IdentityTokenValidator { get; }
 
-        public Flow Flow { get; set; } = Flow.Hybrid;
+        //todo: support plain code flow?
+        //public Flow Flow { get; set; } = Flow.Hybrid;
         public bool UseFormPost { get; set; } = false;
         public bool LoadProfile { get; set; } = true;
         public bool FilterClaims { get; set; } = true;
