@@ -21,7 +21,7 @@ namespace IdentityModel.OidcClient
             _options = options;
         }
 
-        public async Task<AuthorizeState> PrepareAuthorizeAsync(bool trySilent = false, object extaParameters = null)
+        public async Task<AuthorizeState> PrepareAuthorizeAsync(object extaParameters = null)
         {
             return await CreateAuthorizeStateAsync(extaParameters);
         }
