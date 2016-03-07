@@ -15,15 +15,15 @@ namespace IdentityModel.OidcClient
         public string IssuerName { get; set; }
         //public JObject KeySet { get; set; }
 
-        public string Token { get; set; }
-        public string Authorize { get; set; }
-        public string EndSession { get; set; }
-        public string UserInfo { get; set; }
+        public string TokenEndpoint { get; set; }
+        public string AuthorizeEndpoint { get; set; }
+        public string EndSessionEndpoint { get; set; }
+        public string UserInfoEndpoint { get; set; }
 
         public void Validate()
         {
-            if (string.IsNullOrEmpty(Token)) throw new InvalidOperationException("Missing token endpoint.");
-            if (string.IsNullOrEmpty(Authorize)) throw new InvalidOperationException("Missing authorize endpoint.");
+            if (string.IsNullOrEmpty(TokenEndpoint)) throw new InvalidOperationException("Missing token endpoint.");
+            if (string.IsNullOrEmpty(AuthorizeEndpoint)) throw new InvalidOperationException("Missing authorize endpoint.");
         }
 
         public static async Task<ProviderInformation> LoadFromMetadataAsync(string authority)
@@ -38,10 +38,10 @@ namespace IdentityModel.OidcClient
             var info = new ProviderInformation
             {
                 IssuerName = doc["issuer"].ToString(),
-                Authorize = doc["authorization_endpoint"].ToString(),
-                Token = doc["token_endpoint"].ToString(),
-                EndSession = doc["end_session_endpoint"].ToString(),
-                UserInfo = doc["userinfo_endpoint"].ToString(),
+                AuthorizeEndpoint = doc["authorization_endpoint"].ToString(),
+                TokenEndpoint = doc["token_endpoint"].ToString(),
+                EndSessionEndpoint = doc["end_session_endpoint"].ToString(),
+                UserInfoEndpoint = doc["userinfo_endpoint"].ToString(),
             };
 
             // todo: load jwks endpoint

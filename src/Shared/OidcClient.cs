@@ -192,7 +192,7 @@ namespace IdentityModel.OidcClient
 
         private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
         {
-            var endpoint = (await _options.GetProviderInformationAsync()).Token;
+            var endpoint = (await _options.GetProviderInformationAsync()).TokenEndpoint;
 
             var tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
@@ -207,7 +207,7 @@ namespace IdentityModel.OidcClient
         {
             var providerInfo = await _options.GetProviderInformationAsync();
 
-            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfo), accessToken);
+            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken);
             var userInfoResponse = await userInfoClient.GetAsync();
 
             if (userInfoResponse.IsError)
@@ -231,7 +231,7 @@ namespace IdentityModel.OidcClient
             var providerInfo = await _options.GetProviderInformationAsync();
 
             var tokenClient = new TokenClient(
-                providerInfo.Token,
+                providerInfo.TokenEndpoint,
                 _options.ClientId,
                 _options.ClientSecret);
 
