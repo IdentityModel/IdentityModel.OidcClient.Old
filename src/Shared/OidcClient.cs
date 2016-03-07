@@ -218,6 +218,37 @@ namespace IdentityModel.OidcClient
             };
         }
 
+        public async Task<RefreshTokenResult> RefreshTokenAsync(string refreshToken)
+        {
+            var providerInfo = await _options.GetProviderInformationAsync();
+
+            var tokenClient = new TokenClient(
+                providerInfo.Token,
+                _options.ClientId,
+                _options.ClientSecret);
+
+            var response = await tokenClient.RequestRefreshTokenAsync(refreshToken);
+
+            if (response.IsError)
+            {
+                return new RefreshTokenResult
+                {
+                    Success = false,
+                    Error = response.Error
+                };
+            }
+            else
+            {
+                return new RefreshTokenResult
+                {
+                    Success = true,
+                    AccessToken = response.AccessToken,
+                    RefreshToken = response.RefreshToken,
+                    ExpiresIn = (int)response.ExpiresIn
+                };
+            }
+        }
+
         private Claims FilterClaims(Claims claims)
         {
             if (_options.FilterClaims)
