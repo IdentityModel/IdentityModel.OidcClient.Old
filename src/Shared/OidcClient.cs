@@ -39,9 +39,9 @@ namespace IdentityModel.OidcClient
             return await ValidateResponseAsync(authorizeResult.Data, authorizeResult.State);
         }
 
-        public async Task<AuthorizeState> PrepareLoginAsync(bool trySilent = false, object extraParameters = null)
+        public async Task<AuthorizeState> PrepareLoginAsync(object extraParameters = null)
         {
-            return await _authorizeClient.PrepareAuthorizeAsync(trySilent, extraParameters);
+            return await _authorizeClient.PrepareAuthorizeAsync(extraParameters);
         }
 
         public Task LogoutAsync(string identityToken = null, bool trySilent = true)
@@ -73,7 +73,8 @@ namespace IdentityModel.OidcClient
             }
 
             // validate identity token signature
-            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(response.IdentityToken);
+            var providerInfo = await _options.GetProviderInformationAsync();
+            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(response.IdentityToken, _options.ClientId, providerInfo);
 
             if (validationResult.Success == false)
             {
@@ -85,8 +86,7 @@ namespace IdentityModel.OidcClient
             }
 
             var claims = validationResult.Claims;
-            var providerInfo = await _options.GetProviderInformationAsync();
-
+            
             // validate audience
             var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
             if (!string.Equals(_options.ClientId, audience))

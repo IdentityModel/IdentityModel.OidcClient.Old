@@ -8,6 +8,6 @@ namespace IdentityModel.OidcClient
 {
     public interface IIdentityTokenValidator
     {
-        Task<IdentityTokenValidationResult> ValidateAsync(string identityToken);
+        Task<IdentityTokenValidationResult> ValidateAsync(string identityToken, string clientId, ProviderInformation providerInformation);
     }
 }

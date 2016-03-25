@@ -12,23 +12,21 @@ namespace IdentityModel.OidcClient
 {
     public class EndpointIdentityTokenValidator : IIdentityTokenValidator
     {
-        private readonly string _clientId;
         private readonly string _endpoint;
 
-        public EndpointIdentityTokenValidator(string authority, string clientId)
+        public EndpointIdentityTokenValidator(string authority)
         {
             _endpoint = authority.EnsureTrailingSlash() + "connect/identitytokenvalidation";
-            _clientId = clientId;
         }
 
-        public async Task<IdentityTokenValidationResult> ValidateAsync(string identityToken)
+        public async Task<IdentityTokenValidationResult> ValidateAsync(string identityToken, string clientId, ProviderInformation providerInformation)
         {
             var client = new HttpClient();
 
             var form = new Dictionary<string, string>
             {
                 { "token", identityToken },
-                { "client_id", _clientId }
+                { "client_id", clientId }
             };
 
             var response = await client.PostAsync(
