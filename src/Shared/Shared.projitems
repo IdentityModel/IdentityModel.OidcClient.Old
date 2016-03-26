@@ -21,6 +21,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\OidcTokenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\OidcTokenManagerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\StringExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonWebKey\JsonWebkey.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonWebKey\JsonWebKeyParameterNames.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonWebKey\JsonWebKeySet.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OidcClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OidcClientOptions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ProviderInformation.cs" />

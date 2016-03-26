@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using IdentityModel.OidcClient.Jwk;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace IdentityModel.OidcClient
     public class ProviderInformation
     {
         public string IssuerName { get; set; }
-        //public ?? KeySet { get; set; }
+        public JsonWebKeySet KeySet { get; set; }
 
         public string TokenEndpoint { get; set; }
         public string AuthorizeEndpoint { get; set; }
@@ -44,7 +45,10 @@ namespace IdentityModel.OidcClient
                 UserInfoEndpoint = doc["userinfo_endpoint"].ToString(),
             };
 
-            // todo: load jwks endpoint
+            var jwksUri = doc["jwks_uri"].ToString();
+            var jwks = await client.GetStringAsync(jwksUri);
+
+            info.KeySet = new JsonWebKeySet(jwks);
 
             return info;
         }
