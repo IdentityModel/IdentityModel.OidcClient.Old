@@ -44,29 +44,10 @@ namespace IdentityModel.OidcClient
 
             var json = JObject.Parse(await response.Content.ReadAsStringAsync());
 
-            var claims = new Claims();
-
-            foreach (var x in json)
-            {
-                var array = x.Value as JArray;
-
-                if (array != null)
-                {
-                    foreach (var item in array)
-                    {
-                        claims.Add(new Claim(x.Key, item.ToString()));
-                    }
-                }
-                else
-                {
-                    claims.Add(new Claim(x.Key, x.Value.ToString()));
-                }
-            }
-
             return new IdentityTokenValidationResult
             {
                 Success = true,
-                Claims = claims,
+                Claims = json.ToClaims(),
                 SignatureAlgorithm = "RS256"
             };
         }
