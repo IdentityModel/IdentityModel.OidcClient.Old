@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using IdentityModel.OidcClient.IdentityTokenValidation;
 using IdentityModel.OidcClient.WebView;
 using System;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace IdentityModel.OidcClient
             JwtClaimTypes.AccessTokenHash
         };
 
-        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator, IWebView webView = null)
+        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator = null, IWebView webView = null)
         {
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
@@ -58,11 +59,11 @@ namespace IdentityModel.OidcClient
             ClientSecret = clientSecret;
             Scope = scope;
             RedirectUri = redirectUri;
+            IdentityTokenValidator = validator ?? new DefaultIdentityTokenValidator();
             WebView = webView;
-            IdentityTokenValidator = validator;
         }
 
-        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator, IWebView webView = null)
+        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator = null, IWebView webView = null)
             : this(clientId, clientSecret, scope, redirectUri, validator, webView)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
@@ -71,7 +72,7 @@ namespace IdentityModel.OidcClient
             _providerInfo = new Lazy<Task<ProviderInformation>>(() => Task.FromResult(info));
         }
 
-        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator, IWebView webView = null)
+        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator = null, IWebView webView = null)
             : this(clientId, clientSecret, scope, redirectUri, validator, webView)
         {
             if (string.IsNullOrWhiteSpace(authority)) throw new ArgumentNullException(nameof(authority));

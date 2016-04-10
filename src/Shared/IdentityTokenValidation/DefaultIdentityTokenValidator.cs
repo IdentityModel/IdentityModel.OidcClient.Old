@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace IdentityModel.OidcClient.IdentityTokenValidation
 {
-    public class DefaultTokenValidator : IIdentityTokenValidator
+    public class DefaultIdentityTokenValidator : IIdentityTokenValidator
     {
         public TimeSpan ClockSkew { get; set; } = TimeSpan.FromMinutes(5);
 
