@@ -53,8 +53,7 @@ namespace IdentityModel.OidcClient
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
             if (string.IsNullOrWhiteSpace(scope)) throw new ArgumentNullException(nameof(scope));
             if (string.IsNullOrWhiteSpace(redirectUri)) throw new ArgumentNullException(nameof(redirectUri));
-            if (validator == null) throw new ArgumentNullException(nameof(validator));
-
+            
             ClientId = clientId;
             ClientSecret = clientSecret;
             Scope = scope;
