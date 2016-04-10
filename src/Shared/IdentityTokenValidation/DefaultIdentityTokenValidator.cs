@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace IdentityModel.OidcClient.IdentityTokenValidation
 {
-    public class LocalIdentityTokenValidator : IIdentityTokenValidator
+    public class DefaultTokenValidator : IIdentityTokenValidator
     {
         public TimeSpan ClockSkew { get; set; } = TimeSpan.FromMinutes(5);
 
@@ -41,15 +41,24 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
 
             // todo: exp/nbf check
 
-            //var exp = payload["exp"].ToString();
-            //var nbf = payload["nbf"].ToString();
+            var exp = payload["exp"].ToString();
+            var nbf = payload["nbf"].ToString();
 
-            //DateTime utcNow = DateTime.UtcNow;
-            //if (notBefore.HasValue && (notBefore.Value > DateTimeUtil.Add(utcNow, validationParameters.ClockSkew)))
-            //    throw LogHelper.LogException<SecurityTokenNotYetValidException>(LogMessages.IDX10222, notBefore.Value, utcNow);
+            var utcNow = DateTime.UtcNow;
+            var notBefore = long.Parse(nbf).ToDateTimeFromEpoch();
+            var expires = long.Parse(exp).ToDateTimeFromEpoch();
 
-            //if (expires.HasValue && (expires.Value < DateTimeUtil.Add(utcNow, validationParameters.ClockSkew.Negate())))
-            //    throw LogHelper.LogException<SecurityTokenExpiredException>(LogMessages.IDX10223, expires.Value, utcNow);
+            if (notBefore > utcNow.Add(ClockSkew))
+            {
+                fail.Error = "Token not valid yet";
+                return Task.FromResult(fail);
+            }
+
+            if (expires < utcNow.Add(ClockSkew.Negate()))
+            {
+                fail.Error = "Token expired";
+                return Task.FromResult(fail);
+            }
 
             return Task.FromResult(new IdentityTokenValidationResult
             {

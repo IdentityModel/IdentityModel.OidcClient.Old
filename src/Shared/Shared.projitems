@@ -18,7 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\EndpointIdentityTokenValidator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\IdentityTokenValidationResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\IIdentityTokenValidator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\LocalIdentityTokenValidator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\DefaultIdentityTokenValidator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\OidcTokenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\OidcTokenManagerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\StringExtensions.cs" />
