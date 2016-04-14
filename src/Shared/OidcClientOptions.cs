@@ -47,7 +47,7 @@ namespace IdentityModel.OidcClient
             JwtClaimTypes.AccessTokenHash
         };
 
-        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator = null, IWebView webView = null)
+        private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IWebView webView = null, IIdentityTokenValidator validator = null)
         {
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
@@ -62,8 +62,8 @@ namespace IdentityModel.OidcClient
             WebView = webView;
         }
 
-        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator = null, IWebView webView = null)
-            : this(clientId, clientSecret, scope, redirectUri, validator, webView)
+        public OidcClientOptions(ProviderInformation info, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView = null, IIdentityTokenValidator validator = null)
+            : this(clientId, clientSecret, scope, redirectUri, webView, validator)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
             info.Validate();
@@ -71,8 +71,8 @@ namespace IdentityModel.OidcClient
             _providerInfo = new Lazy<Task<ProviderInformation>>(() => Task.FromResult(info));
         }
 
-        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IIdentityTokenValidator validator = null, IWebView webView = null)
-            : this(clientId, clientSecret, scope, redirectUri, validator, webView)
+        public OidcClientOptions(string authority, string clientId, string clientSecret, string scope, string redirectUri, IWebView webView = null, IIdentityTokenValidator validator = null)
+            : this(clientId, clientSecret, scope, redirectUri, webView, validator)
         {
             if (string.IsNullOrWhiteSpace(authority)) throw new ArgumentNullException(nameof(authority));
 
