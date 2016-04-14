@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+
+
+using System;
 using System.Threading.Tasks;
 using System.Linq;
 using JosePCL.Keys.Rsa;
@@ -38,8 +42,6 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
                 fail.Error = "Invalid audience";
                 return Task.FromResult(fail);
             }
-
-            // todo: exp/nbf check
 
             var exp = payload["exp"].ToString();
             var nbf = payload["nbf"].ToString();
