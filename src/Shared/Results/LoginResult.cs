@@ -2,8 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using Newtonsoft.Json;
 using System;
+using System.Net.Http;
 
 namespace IdentityModel.OidcClient
 {
@@ -22,13 +22,6 @@ namespace IdentityModel.OidcClient
 
         public int SecondsBeforeRenewRequired { get; set; } = 60;
 
-        [JsonIgnore]
-        public bool IsAccessTokenValid
-        {
-            get
-            {
-                return DateTime.Now < AccessTokenExpiration.AddSeconds(- SecondsBeforeRenewRequired);
-            }
-        }
+        public HttpMessageHandler Handler { get; set; }
     }
 }

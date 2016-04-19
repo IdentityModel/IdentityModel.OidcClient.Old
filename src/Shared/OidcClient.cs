@@ -186,7 +186,13 @@ namespace IdentityModel.OidcClient
                 RefreshToken = tokenResult.RefreshToken,
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
                 IdentityToken = response.IdentityToken,
-                AuthenticationTime = DateTime.Now
+                AuthenticationTime = DateTime.Now,
+                Handler = new RefeshTokenHandler(
+                    providerInfo.TokenEndpoint,
+                    _options.ClientId,
+                    _options.ClientSecret,
+                    tokenResult.RefreshToken,
+                    tokenResult.AccessToken)
             };
         }
 

@@ -40,7 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="IdentityModel, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\IdentityModel.1.10.0\lib\portable-net45+wp80+win8+wpa81\IdentityModel.dll</HintPath>
+      <HintPath>..\..\packages\IdentityModel.1.11.0\lib\portable-net45+wp80+win8+wpa81\IdentityModel.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="jose-pcl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
