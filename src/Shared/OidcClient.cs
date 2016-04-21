@@ -178,7 +178,7 @@ namespace IdentityModel.OidcClient
             }
 
             // success
-            return new LoginResult
+            var loginResult = new LoginResult
             {
                 Success = true,
                 Claims = FilterClaims(claims),
@@ -187,13 +187,19 @@ namespace IdentityModel.OidcClient
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
                 IdentityToken = response.IdentityToken,
                 AuthenticationTime = DateTime.Now,
-                Handler = new RefeshTokenHandler(
+            };
+
+            if (!string.IsNullOrWhiteSpace(tokenResult.RefreshToken))
+            {
+                loginResult.Handler = new RefeshTokenHandler(
                     providerInfo.TokenEndpoint,
                     _options.ClientId,
                     _options.ClientSecret,
                     tokenResult.RefreshToken,
-                    tokenResult.AccessToken)
-            };
+                    tokenResult.AccessToken);
+            }
+
+            return loginResult;
         }
 
         private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
