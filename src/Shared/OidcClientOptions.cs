@@ -23,13 +23,10 @@ namespace IdentityModel.OidcClient
         public IWebView WebView { get; }
         public IIdentityTokenValidator IdentityTokenValidator { get; }
 
-        //todo: support plain code flow?
-        //public Flow Flow { get; set; } = Flow.Hybrid;
         public bool UseFormPost { get; set; } = false;
         public bool LoadProfile { get; set; } = true;
         public bool FilterClaims { get; set; } = true;
-        public bool UseProofKeys { get; set; } = true;
-
+        
         public TimeSpan WebViewTimeout { get; set; } = TimeSpan.FromSeconds(10);
         public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(30);
         public HttpMessageHandler BackchannelHandler { get; set; }

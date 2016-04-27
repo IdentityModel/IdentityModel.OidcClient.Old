@@ -109,23 +109,16 @@ namespace IdentityModel.OidcClient
 
         private string CreateCodeChallenge(AuthorizeState state)
         {
-            if (_options.UseProofKeys)
-            {
-                state.CodeVerifier = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
-                var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
+            state.CodeVerifier = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
 
-                var challengeBuffer = sha256.HashData(
-                    CryptographicBuffer.CreateFromByteArray(
-                        Encoding.UTF8.GetBytes(state.CodeVerifier)));
-                byte[] challengeBytes;
+            var challengeBuffer = sha256.HashData(
+                CryptographicBuffer.CreateFromByteArray(
+                    Encoding.UTF8.GetBytes(state.CodeVerifier)));
+            byte[] challengeBytes;
 
-                CryptographicBuffer.CopyToByteArray(challengeBuffer, out challengeBytes);
-                return Base64Url.Encode(challengeBytes);
-            }
-            else
-            {
-                return null;
-            }
+            CryptographicBuffer.CopyToByteArray(challengeBuffer, out challengeBytes);
+            return Base64Url.Encode(challengeBytes);
         }
 
         private async Task<string> CreateUrlAsync(AuthorizeState state, string codeChallenge, object extraParameters)
@@ -139,7 +132,7 @@ namespace IdentityModel.OidcClient
                 responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
                 nonce: state.Nonce,
                 codeChallenge: codeChallenge,
-                codeChallengeMethod: _options.UseProofKeys ? OidcConstants.CodeChallengeMethods.Sha256 : null,
+                codeChallengeMethod: OidcConstants.CodeChallengeMethods.Sha256,
                 extra: extraParameters);
 
             return url;
