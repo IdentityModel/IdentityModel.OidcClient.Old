@@ -11,7 +11,18 @@ namespace IdentityModel.OidcClient
         public static string CreateUniqueId(int length = 64)
         {
             var bytes = PCLCrypto.WinRTCrypto.CryptographicBuffer.GenerateRandom(length);
-            return PCLCrypto.WinRTCrypto.CryptographicBuffer.ConvertBinaryToString(Encoding.UTF8, bytes);
+            return ByteArrayToString(bytes);
+        }
+
+        private static string ByteArrayToString(byte[] ba)
+        {
+            StringBuilder hex = new StringBuilder(ba.Length * 2);
+            foreach (byte b in ba)
+            {
+                hex.AppendFormat("{0:x2}", b);
+            }
+
+            return hex.ToString();
         }
     }
 }
