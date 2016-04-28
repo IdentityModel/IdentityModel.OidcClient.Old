@@ -43,10 +43,6 @@ namespace IdentityModel.OidcClient
             var invokeOptions = new InvokeOptions(result.State.StartUrl, _options.RedirectUri);
             invokeOptions.Timeout = _options.WebViewTimeout;
 
-            if (_options.UseFormPost)
-            {
-                invokeOptions.ResponseMode = ResponseMode.Redirect;
-            }
             if (trySilent)
             {
                 invokeOptions.InitialDisplayMode = DisplayMode.Hidden;
