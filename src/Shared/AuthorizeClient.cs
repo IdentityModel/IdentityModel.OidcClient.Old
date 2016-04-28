@@ -94,7 +94,7 @@ namespace IdentityModel.OidcClient
         {
             var state = new AuthorizeState();
 
-            state.Nonce = Guid.NewGuid().ToString("N");
+            state.Nonce = RNG.CreateUniqueId();
             state.RedirectUri = _options.RedirectUri;
 
             string codeChallenge = CreateCodeChallenge(state);
@@ -105,7 +105,7 @@ namespace IdentityModel.OidcClient
 
         private string CreateCodeChallenge(AuthorizeState state)
         {
-            state.CodeVerifier = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            state.CodeVerifier = RNG.CreateUniqueId();
             var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
 
             var challengeBuffer = sha256.HashData(
