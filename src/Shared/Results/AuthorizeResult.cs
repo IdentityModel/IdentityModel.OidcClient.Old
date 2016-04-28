@@ -6,7 +6,7 @@ namespace IdentityModel.OidcClient
 {
     public class AuthorizeResult
     {
-        public bool IsError { get; set; }
+        public bool Success { get; set; }
         public string Error { get; set; }
 
         public string Data { get; set; }

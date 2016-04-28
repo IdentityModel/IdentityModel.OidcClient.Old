@@ -36,12 +36,12 @@ namespace IdentityModel.OidcClient
             InvokeResult wviResult;
             AuthorizeResult result = new AuthorizeResult
             {
-                IsError = true,
+                Success = false,
                 State = await CreateAuthorizeStateAsync(extraParameters)
             };
 
             var invokeOptions = new InvokeOptions(result.State.StartUrl, _options.RedirectUri);
-            invokeOptions.Timeout = _options.WebViewTimeout;
+            invokeOptions.InvisibleModeTimeout = _options.WebViewTimeout;
 
             if (trySilent)
             {
@@ -56,7 +56,7 @@ namespace IdentityModel.OidcClient
 
             if (wviResult.ResultType == InvokeResultType.Success)
             {
-                result.IsError = false;
+                result.Success = true;
                 result.Data = wviResult.Response;
 
                 return result;
@@ -79,7 +79,7 @@ namespace IdentityModel.OidcClient
             var webViewOptions = new InvokeOptions(url, _options.RedirectUri)
             {
                 ResponseMode = ResponseMode.Redirect,
-                Timeout = _options.WebViewTimeout
+                InvisibleModeTimeout = _options.WebViewTimeout
             };
 
             if (trySilent)

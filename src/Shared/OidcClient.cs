@@ -27,7 +27,7 @@ namespace IdentityModel.OidcClient
         {
             var authorizeResult = await _authorizeClient.AuthorizeAsync(trySilent, extraParameters);
 
-            if (authorizeResult.IsError)
+            if (!authorizeResult.Success)
             {
                 return new LoginResult
                 {

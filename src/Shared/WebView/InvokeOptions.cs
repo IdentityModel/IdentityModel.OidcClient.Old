@@ -13,7 +13,7 @@ namespace IdentityModel.OidcClient.WebView
 
         public ResponseMode ResponseMode { get; set; } = ResponseMode.Redirect;
         public DisplayMode InitialDisplayMode { get; set; } = DisplayMode.Visible;
-        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
+        public TimeSpan InvisibleModeTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
         public InvokeOptions(string startUrl, string endUrl)
         {
