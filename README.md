@@ -16,7 +16,8 @@ and implement OpenID Connect [Hybrid Flow](https://openid.net/specs/openid-conne
 ## Setup
 
 The `OidcClientOptions` class lets you set up the parameters for communicating
-with the OpenID Connect provider. Here you specify the address to the provider, client ID, client secret, scopes and redirect URI.
+with the OpenID Connect provider. Here you specify the base address of the 
+provider, client ID, client secret, scopes and redirect URI.
 
 ```csharp
 var authority = "https://demo.identityserver.io";
@@ -42,7 +43,7 @@ The `OidcClient` class supports two modes to interact with the token provider
 
 ### Manual
 
-To generate the authorize start URL and the necessary artifacts like nonce, code verifier and challenge
+To generate the authorize start URL and the necessary artifacts like nonce, code verifier and challenge,
 call `PrepareLoginAsync`. This will return a state object that will be used later to validate the response.
 
 ```csharp
@@ -56,9 +57,9 @@ You can now launch your favourite browser using the `StartUrl` property returned
 var safari = new SafariServices.SFSafariViewController (new NSUrl (_state.StartUrl));
 ```
 
-In this mode it is also your responsibility to capture the full return URL after the authentication is done.
-You can pass the URL bac to `OidcClient` to do the parsing and validation.
-If successful the `LoginResult` result returned will contain the claims of the user, access token and refresh token:
+In this mode, it is also your responsibility to capture the full return URL after the authentication is done.
+You can pass the URL back to `OidcClient` to do the parsing and validation.
+If successful, the `LoginResult` result returned will contain the claims of the user, access token and refresh token:
 
 ```csharp
 var result = await client.ValidateResponseAsync (url, state);
@@ -100,3 +101,12 @@ apiClient.BaseAddress = new Uri("https://demo.identityserver.io/api/");
 
 var result = await _apiClient.GetAsync("resource");
 ```
+
+# OSS FTW!
+
+`OidcClient` is based on the following OSS projects:
+
+* [IdentityModel](https://github.com/IdentityModel/IdentityModel)
+* [PCLCrypto](https://github.com/AArnott/PCLCrypto)
+* [Jose-Pcl](https://github.com/dvsekhvalnov/jose-pcl)
+* [Json.Net](https://github.com/JamesNK/Newtonsoft.Json)
