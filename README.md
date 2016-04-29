@@ -99,7 +99,7 @@ The handler is available as a standalone class, as well a directly from the `Log
 var apiClient = new HttpClient(result.Handler);
 apiClient.BaseAddress = new Uri("https://demo.identityserver.io/api/");
 
-var result = await _apiClient.GetAsync("resource");
+var result = await apiClient.GetAsync("resource");
 ```
 
 # OSS FTW!
