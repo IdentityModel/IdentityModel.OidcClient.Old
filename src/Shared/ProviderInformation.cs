@@ -33,7 +33,6 @@ namespace IdentityModel.OidcClient
             var url = authority.EnsureTrailingSlash() + ".well-known/openid-configuration";
 
             var json = await client.GetStringAsync(url);
-
             var doc = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
 
             var info = new ProviderInformation
@@ -41,9 +40,17 @@ namespace IdentityModel.OidcClient
                 IssuerName = doc["issuer"].ToString(),
                 AuthorizeEndpoint = doc["authorization_endpoint"].ToString(),
                 TokenEndpoint = doc["token_endpoint"].ToString(),
-                EndSessionEndpoint = doc["end_session_endpoint"].ToString(),
-                UserInfoEndpoint = doc["userinfo_endpoint"].ToString(),
             };
+
+            if (doc.ContainsKey("end_session_endpoint"))
+            {
+                info.EndSessionEndpoint = doc["end_session_endpoint"].ToString();
+            }
+
+            if (doc.ContainsKey("userinfo_endpoint"))
+            {
+                info.UserInfoEndpoint = doc["userinfo_endpoint"].ToString();
+            }
 
             // parse web key set
             var jwksUri = doc["jwks_uri"].ToString();
