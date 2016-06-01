@@ -23,6 +23,11 @@ namespace IdentityModel.OidcClient
             _options = options;
         }
 
+        public OidcClientOptions Options
+        {
+            get { return _options; }
+        }
+
         public async Task<LoginResult> LoginAsync(bool trySilent = false, object extraParameters = null)
         {
             var authorizeResult = await _authorizeClient.AuthorizeAsync(trySilent, extraParameters);
