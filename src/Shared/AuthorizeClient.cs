@@ -120,9 +120,24 @@ namespace IdentityModel.OidcClient
         private async Task<string> CreateUrlAsync(AuthorizeState state, string codeChallenge, object extraParameters)
         {
             var request = new AuthorizeRequest((await _options.GetProviderInformationAsync()).AuthorizeEndpoint);
+
+            string responseType = null;
+            if (_options.Style == OidcClientOptions.AuthenticationStyle.AuthorizationCode)
+            {
+                responseType = OidcConstants.ResponseTypes.Code;
+            }
+            else if(_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
+            {
+                responseType = OidcConstants.ResponseTypes.CodeIdToken;
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported authentication style");
+            }
+
             var url = request.CreateAuthorizeUrl(
                 clientId: _options.ClientId,
-                responseType: OidcConstants.ResponseTypes.CodeIdToken,
+                responseType: responseType,
                 scope: _options.Scope,
                 redirectUri: state.RedirectUri,
                 responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
