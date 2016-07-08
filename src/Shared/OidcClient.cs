@@ -146,7 +146,7 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
+            var validationResult = await ValidateIdentityTokenAsync(tokenResponse.IdentityToken);
             if (!validationResult.Success)
             {
                 result.Error = validationResult.Error ?? "identity token validation error";
