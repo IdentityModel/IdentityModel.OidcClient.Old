@@ -26,6 +26,7 @@ namespace IdentityModel.OidcClient
         public bool UseFormPost { get; set; } = false;
         public bool LoadProfile { get; set; } = true;
         public bool FilterClaims { get; set; } = true;
+        public AuthenticationStyle Style = AuthenticationStyle.Hybrid;
         
         public TimeSpan WebViewTimeout { get; set; } = TimeSpan.FromSeconds(10);
         public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(30);
@@ -43,6 +44,12 @@ namespace IdentityModel.OidcClient
             JwtClaimTypes.AuthorizationCodeHash,
             JwtClaimTypes.AccessTokenHash
         };
+
+        public enum AuthenticationStyle
+        {
+            AuthorizationCode,
+            Hybrid
+        }
 
         private OidcClientOptions(string clientId, string clientSecret, string scope, string redirectUri, IWebView webView = null, IIdentityTokenValidator validator = null)
         {

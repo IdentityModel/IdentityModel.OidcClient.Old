@@ -57,6 +57,7 @@ namespace IdentityModel.OidcClient
         public async Task<LoginResult> ValidateResponseAsync(string data, AuthorizeState state)
         {
             var result = new LoginResult { Success = false };
+
             var response = new AuthorizeResponse(data);
 
             if (response.IsError)
@@ -67,100 +68,102 @@ namespace IdentityModel.OidcClient
 
             if (string.IsNullOrEmpty(response.Code))
             {
-                result.Error = "Missing authorization code";
+                result.Error = "missing authorization code";
                 return result;
             }
 
-            if (string.IsNullOrEmpty(response.IdentityToken))
+            if (_options.Style == OidcClientOptions.AuthenticationStyle.AuthorizationCode)
             {
-                result.Error = "Missing identity token";
+                return await ValidateCodeFlowResponse(response, state);
+            }
+            else if (_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
+            {
+                return await ValidateHybridFlowResponse(response, state);
+            }
+
+            throw new InvalidOperationException("Invalid authentication style");
+        }
+
+        private async Task<LoginResult> ValidateHybridFlowResponse(AuthorizeResponse authorizeResponse, AuthorizeState state)
+        {
+            var result = new LoginResult { Success = false };
+
+            if (string.IsNullOrEmpty(authorizeResponse.IdentityToken))
+            {
+                result.Error = "missing identity token";
                 return result;
             }
 
-            // validate identity token signature
-            var providerInfo = await _options.GetProviderInformationAsync();
-            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(response.IdentityToken, _options.ClientId, providerInfo);
-
-            if (validationResult.Success == false)
+            var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
+            if (!validationResult.Success)
             {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = validationResult.Error ?? "identity token validation error"
-                };
+                result.Error = validationResult.Error ?? "identity token validation error";
+                return result;
             }
 
-            var claims = validationResult.Claims;
-            
-            // validate audience
-            var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
-            if (!string.Equals(_options.ClientId, audience))
+            if (!ValidateNonce(state.Nonce, validationResult.Claims))
             {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = "invalid audience"
-                };
+                result.Error = "invalid nonce";
+                return result;
             }
 
-            // validate issuer
-            var issuer = claims.FindFirst(JwtClaimTypes.Issuer)?.Value ?? "";
-            if (!string.Equals(providerInfo.IssuerName, issuer))
+            if (!ValidateAuthorizationCodeHash(authorizeResponse.Code, validationResult.Claims))
             {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = "invalid issuer"
-                };
-            }
-
-            // validate nonce
-            var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
-            if (!string.Equals(state.Nonce, tokenNonce))
-            {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = "invalid nonce"
-                };
-            }
-
-            // validate c_hash
-            var cHash = claims.FindFirst(JwtClaimTypes.AuthorizationCodeHash)?.Value ?? "";
-            var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
-
-            var codeHash = sha256.HashData(
-                CryptographicBuffer.CreateFromByteArray(
-                    Encoding.UTF8.GetBytes(response.Code)));
-
-            byte[] codeHashArray;
-            CryptographicBuffer.CopyToByteArray(codeHash, out codeHashArray);
-
-            byte[] leftPart = new byte[16];
-            Array.Copy(codeHashArray, leftPart, 16);
-
-            var leftPartB64 = Base64Url.Encode(leftPart);
-
-            if (!leftPartB64.Equals(cHash))
-            {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = "invalid code"
-                };
+                result.Error = "invalid c_hash";
+                return result;
             }
 
             // redeem code for tokens
-            var tokenResult = await RedeemCodeAsync(response.Code, state);
-            if (tokenResult.IsError || tokenResult.IsHttpError)
+            var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
+            if (tokenResponse.IsError || tokenResponse.IsHttpError)
             {
                 return new LoginResult
                 {
                     Success = false,
-                    Error = tokenResult.Error
+                    Error = tokenResponse.Error
                 };
             }
 
+            return await ProcessClaims(authorizeResponse, tokenResponse, validationResult.Claims);
+        }
+
+        
+        private async Task<LoginResult> ValidateCodeFlowResponse(AuthorizeResponse authorizeResponse, AuthorizeState state)
+        {
+            var result = new LoginResult { Success = false };
+            
+            // redeem code for tokens
+            var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
+            if (tokenResponse.IsError || tokenResponse.IsHttpError)
+            {
+                result.Error = tokenResponse.Error;
+                return result;
+            }
+
+            if (tokenResponse.IdentityToken.IsMissing())
+            {
+                result.Error = "missing identity token";
+                return result;
+            }
+
+            var validationResult = await ValidateIdentityTokenAsync(tokenResponse.IdentityToken);
+            if (!validationResult.Success)
+            {
+                result.Error = validationResult.Error ?? "identity token validation error";
+                return result;
+            }
+
+            if (!ValidateAccessTokenHash(authorizeResponse.AccessToken, validationResult.Claims))
+            {
+                result.Error = "invalid access token hash";
+                return result;
+            }
+
+            return await ProcessClaims(authorizeResponse, tokenResponse, validationResult.Claims);
+        }
+
+        private async Task<LoginResult> ProcessClaims(AuthorizeResponse response, TokenResponse tokenResult, Claims claims)
+        {
             // get profile if enabled
             if (_options.LoadProfile)
             {
@@ -196,6 +199,8 @@ namespace IdentityModel.OidcClient
 
             if (!string.IsNullOrWhiteSpace(tokenResult.RefreshToken))
             {
+                var providerInfo = await _options.GetProviderInformationAsync();
+
                 loginResult.Handler = new RefeshTokenHandler(
                     providerInfo.TokenEndpoint,
                     _options.ClientId,
@@ -205,6 +210,104 @@ namespace IdentityModel.OidcClient
             }
 
             return loginResult;
+        }
+
+
+        private async Task<IdentityTokenValidationResult> ValidateIdentityTokenAsync(string idToken)
+        {
+            var providerInfo = await _options.GetProviderInformationAsync();
+            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(idToken, _options.ClientId, providerInfo);
+
+            if (validationResult.Success == false)
+            {
+                return validationResult;
+            }
+
+            var claims = validationResult.Claims;
+
+            // validate audience
+            var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
+            if (!string.Equals(_options.ClientId, audience))
+            {
+                return new IdentityTokenValidationResult
+                {
+                    Success = false,
+                    Error = "invalid audience"
+                };
+            }
+
+            // validate issuer
+            var issuer = claims.FindFirst(JwtClaimTypes.Issuer)?.Value ?? "";
+            if (!string.Equals(providerInfo.IssuerName, issuer))
+            {
+                return new IdentityTokenValidationResult
+                {
+                    Success = false,
+                    Error = "invalid issuer"
+                };
+            }
+
+            return validationResult;
+        }
+
+        private bool ValidateNonce(string nonce, Claims claims)
+        {
+            var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
+            return string.Equals(nonce, tokenNonce, StringComparison.Ordinal);
+        }
+
+        private bool ValidateAuthorizationCodeHash(string code, Claims claims)
+        {
+            // validate c_hash
+            var cHash = claims.FindFirst(JwtClaimTypes.AuthorizationCodeHash)?.Value ?? "";
+
+            if (cHash.IsMissing())
+            {
+                return true;
+            }
+
+            var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
+
+            var codeHash = sha256.HashData(
+                CryptographicBuffer.CreateFromByteArray(
+                    Encoding.UTF8.GetBytes(code)));
+
+            byte[] codeHashArray;
+            CryptographicBuffer.CopyToByteArray(codeHash, out codeHashArray);
+
+            byte[] leftPart = new byte[16];
+            Array.Copy(codeHashArray, leftPart, 16);
+
+            var leftPartB64 = Base64Url.Encode(leftPart);
+
+            return leftPartB64.Equals(cHash);
+        }
+
+        private bool ValidateAccessTokenHash(string accessToken, Claims claims)
+        {
+            // validate c_hash
+            var atHash = claims.FindFirst(JwtClaimTypes.AccessTokenHash)?.Value ?? "";
+
+            if (atHash.IsMissing())
+            {
+                return true;
+            }
+
+            var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
+
+            var codeHash = sha256.HashData(
+                CryptographicBuffer.CreateFromByteArray(
+                    Encoding.UTF8.GetBytes(accessToken)));
+
+            byte[] atHashArray;
+            CryptographicBuffer.CopyToByteArray(codeHash, out atHashArray);
+
+            byte[] leftPart = new byte[16];
+            Array.Copy(atHashArray, leftPart, 16);
+
+            var leftPartB64 = Base64Url.Encode(leftPart);
+
+            return leftPartB64.Equals(atHash);
         }
 
         private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
