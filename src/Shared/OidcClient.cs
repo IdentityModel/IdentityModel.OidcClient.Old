@@ -84,18 +84,17 @@ namespace IdentityModel.OidcClient
             throw new InvalidOperationException("Invalid authentication style");
         }
 
-        private async Task<LoginResult> ValidateHybridFlowResponse(AuthorizeResponse response, AuthorizeState state)
+        private async Task<LoginResult> ValidateHybridFlowResponse(AuthorizeResponse authorizeResponse, AuthorizeState state)
         {
             var result = new LoginResult { Success = false };
-            
-            if (string.IsNullOrEmpty(response.IdentityToken))
+
+            if (string.IsNullOrEmpty(authorizeResponse.IdentityToken))
             {
                 result.Error = "missing identity token";
                 return result;
             }
 
-            var validationResult = await ValidateIdentityTokenAsync(response.IdentityToken);
-
+            var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
             if (!validationResult.Success)
             {
                 result.Error = validationResult.Error ?? "identity token validation error";
@@ -108,25 +107,63 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            if (!ValidateAuthorizationCodeHash(response.Code, validationResult.Claims))
+            if (!ValidateAuthorizationCodeHash(authorizeResponse.Code, validationResult.Claims))
             {
                 result.Error = "invalid c_hash";
                 return result;
             }
 
-            var claims = validationResult.Claims;
-
             // redeem code for tokens
-            var tokenResult = await RedeemCodeAsync(response.Code, state);
-            if (tokenResult.IsError || tokenResult.IsHttpError)
+            var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
+            if (tokenResponse.IsError || tokenResponse.IsHttpError)
             {
                 return new LoginResult
                 {
                     Success = false,
-                    Error = tokenResult.Error
+                    Error = tokenResponse.Error
                 };
             }
 
+            return await ProcessClaims(authorizeResponse, tokenResponse, validationResult.Claims);
+        }
+
+        
+        private async Task<LoginResult> ValidateCodeFlowResponse(AuthorizeResponse authorizeResponse, AuthorizeState state)
+        {
+            var result = new LoginResult { Success = false };
+            
+            // redeem code for tokens
+            var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
+            if (tokenResponse.IsError || tokenResponse.IsHttpError)
+            {
+                result.Error = tokenResponse.Error;
+                return result;
+            }
+
+            if (tokenResponse.IdentityToken.IsMissing())
+            {
+                result.Error = "missing identity token";
+                return result;
+            }
+
+            var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
+            if (!validationResult.Success)
+            {
+                result.Error = validationResult.Error ?? "identity token validation error";
+                return result;
+            }
+
+            if (!ValidateAccessTokenHash(authorizeResponse.AccessToken, validationResult.Claims))
+            {
+                result.Error = "invalid access token hash";
+                return result;
+            }
+
+            return await ProcessClaims(authorizeResponse, tokenResponse, validationResult.Claims);
+        }
+
+        private async Task<LoginResult> ProcessClaims(AuthorizeResponse response, TokenResponse tokenResult, Claims claims)
+        {
             // get profile if enabled
             if (_options.LoadProfile)
             {
@@ -175,87 +212,6 @@ namespace IdentityModel.OidcClient
             return loginResult;
         }
 
-        private async Task<LoginResult> ValidateCodeFlowResponse(AuthorizeResponse response, AuthorizeState state)
-        {
-            var result = new LoginResult { Success = false };
-            
-            // redeem code for tokens
-            var tokenResult = await RedeemCodeAsync(response.Code, state);
-            if (tokenResult.IsError || tokenResult.IsHttpError)
-            {
-                result.Error = tokenResult.Error;
-                return result;
-            }
-
-            if (tokenResult.IdentityToken.IsMissing())
-            {
-                result.Error = "missing identity token";
-                return result;
-            }
-
-            var validationResult = await ValidateIdentityTokenAsync(response.IdentityToken);
-
-            if (!validationResult.Success)
-            {
-                result.Error = validationResult.Error ?? "identity token validation error";
-                return result;
-            }
-
-            if (!ValidateAccessTokenHash(response.AccessToken, validationResult.Claims))
-            {
-                result.Error = "invalid access token hash";
-                return result;
-            }
-
-            var claims = validationResult.Claims;
-
-            // get profile is enabled
-            if (_options.LoadProfile)
-            {
-                var userInfoResult = await GetUserInfoAsync(tokenResult.AccessToken);
-
-                if (!userInfoResult.Success)
-                {
-                    return new LoginResult
-                    {
-                        Success = false,
-                        Error = userInfoResult.Error
-                    };
-                }
-
-                var primaryClaimTypes = claims.Select(c => c.Type).Distinct();
-                foreach (var claim in userInfoResult.Claims.Where(c => !primaryClaimTypes.Contains(c.Type)))
-                {
-                    claims.Add(claim);
-                }
-            }
-
-            // success
-            var loginResult = new LoginResult
-            {
-                Success = true,
-                Claims = FilterClaims(claims),
-                AccessToken = tokenResult.AccessToken,
-                RefreshToken = tokenResult.RefreshToken,
-                AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
-                IdentityToken = response.IdentityToken,
-                AuthenticationTime = DateTime.Now,
-            };
-
-            if (!string.IsNullOrWhiteSpace(tokenResult.RefreshToken))
-            {
-                var providerInfo = await _options.GetProviderInformationAsync();
-
-                loginResult.Handler = new RefeshTokenHandler(
-                    providerInfo.TokenEndpoint,
-                    _options.ClientId,
-                    _options.ClientSecret,
-                    tokenResult.RefreshToken,
-                    tokenResult.AccessToken);
-            }
-
-            return loginResult;
-        }
 
         private async Task<IdentityTokenValidationResult> ValidateIdentityTokenAsync(string idToken)
         {
