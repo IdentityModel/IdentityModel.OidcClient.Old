@@ -1,0 +1,54 @@
+﻿{
+  "version": "1.0.0-*",
+
+  "authors": [ "Dominick Baier", "Brock Allen" ],
+  "copyright": "Dominick Baier, Brock Allen 2015",
+  "title": "IdentityModel.OidcClient",
+  "description": "OpenID Connect Client Library for Native Applications",
+  "packOptions": {
+    "tags": [ "OAuth2", "OIDC", "OpenID Connect", "JWT", "Tokens", "Federation", "API", "Authorization" ],
+    "projectUrl": "http://github.com/identitymodel",
+    "iconUrl": "https://identityserver.github.io/Documentation/assets/images/icons/IDmodel_icon128.png",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/IdentityModel/IdentityModel.OidcClient.git"
+    }
+  },
+
+  "dependencies": {
+    "NETStandard.Library": "1.6.0",
+    "IdentityModel": "1.11.0",
+    "PCLCrypto": "2.0.147"
+  },
+
+  "frameworks": {
+    "netstandard1.3": {
+      "imports": [
+        "dnxcore50",
+        "portable-net45+win+wpa81+MonoAndroid10+xamarinios10+MonoTouch10"
+      ],
+      "dependencies": {
+        "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
+        "System.ComponentModel": "4.0.1",
+        "System.Dynamic.Runtime": "4.0.11",
+        "jose-pcl": "0.0.4"
+      },
+      "buildOptions": {
+        "compile": {
+          "excludeFiles": [
+            "NetClaimsExtensions.cs"
+          ]
+        }
+      }
+    },
+    "net45": {
+      "dependencies": {
+        "jose-jwt": "1.9.3",
+        "PInvoke.BCrypt": "0.3.2",
+        "PInvoke.Kernel32": "0.3.2",
+        "PInvoke.NCrypt": "0.3.2",
+        "PInvoke.Windows.Core": "0.3.2"
+      }
+    }
+  }
+}
