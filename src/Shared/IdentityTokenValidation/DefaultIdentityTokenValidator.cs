@@ -43,19 +43,22 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
                 return Task.FromResult(fail);
             }
 
-            var exp = payload["exp"].ToString();
-            var nbf = payload["nbf"].ToString();
+            var exp = payload.Value<long>("exp");
+            var nbf = payload.Value<long?>("nbf");
 
             var utcNow = DateTime.UtcNow;
-            var notBefore = long.Parse(nbf).ToDateTimeFromEpoch();
-            var expires = long.Parse(exp).ToDateTimeFromEpoch();
 
-            if (notBefore > utcNow.Add(ClockSkew))
+            if (nbf != null)
             {
-                fail.Error = "Token not valid yet";
-                return Task.FromResult(fail);
+                var notBefore = nbf.Value.ToDateTimeFromEpoch();
+                if (notBefore > utcNow.Add(ClockSkew))
+                {
+                    fail.Error = "Token not valid yet";
+                    return Task.FromResult(fail);
+                }
             }
 
+            var expires = exp.ToDateTimeFromEpoch();
             if (expires < utcNow.Add(ClockSkew.Negate()))
             {
                 fail.Error = "Token expired";
