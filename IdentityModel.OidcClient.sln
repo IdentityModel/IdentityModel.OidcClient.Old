@@ -1,35 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel.OidcClient", "src\IdentityModel.OidcClient\IdentityModel.OidcClient.csproj", "{D85E9818-2943-41C2-AE22-5DB0DE061997}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "IdentityModel.OidcClient", "src\IdentityModel.OidcClient\IdentityModel.OidcClient.xproj", "{53C3F1EF-3CBA-431C-8443-D951AD1EB419}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel.OidcClient.Net", "src\IdentityModel.OidcClient.Net\IdentityModel.OidcClient.Net.csproj", "{C3FF5628-3E85-4957-BA55-DAD8E999D51C}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared", "src\Shared\Shared.shproj", "{A1C5566B-C8FD-412F-AB75-050461F4962C}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E1592078-0910-4669-B6BA-6D7120EBF3EE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7A7229F2-D93B-44DB-B2D8-9503F7A4A6D2}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		src\Shared\Shared.projitems*{d85e9818-2943-41c2-ae22-5db0de061997}*SharedItemsImports = 4
-		src\Shared\Shared.projitems*{c3ff5628-3e85-4957-ba55-dad8e999d51c}*SharedItemsImports = 4
-		src\Shared\Shared.projitems*{a1c5566b-c8fd-412f-ab75-050461f4962c}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D85E9818-2943-41C2-AE22-5DB0DE061997}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C3FF5628-3E85-4957-BA55-DAD8E999D51C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53C3F1EF-3CBA-431C-8443-D951AD1EB419}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53C3F1EF-3CBA-431C-8443-D951AD1EB419}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53C3F1EF-3CBA-431C-8443-D951AD1EB419}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53C3F1EF-3CBA-431C-8443-D951AD1EB419}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

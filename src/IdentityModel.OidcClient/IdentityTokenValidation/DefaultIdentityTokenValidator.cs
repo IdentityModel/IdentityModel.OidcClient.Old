@@ -5,11 +5,18 @@
 using System;
 using System.Threading.Tasks;
 using System.Linq;
-using JosePCL.Keys.Rsa;
 using Newtonsoft.Json.Linq;
 
 namespace IdentityModel.OidcClient.IdentityTokenValidation
 {
+#if NET45
+    using Jwt = Jose.JWT;
+    using PublicKey = Security.Cryptography.RsaKey;
+#else
+    using Jwt = JosePCL.Jwt;
+    using JosePCL.Keys.Rsa;
+#endif
+
     public class DefaultIdentityTokenValidator : IIdentityTokenValidator
     {
         public TimeSpan ClockSkew { get; set; } = TimeSpan.FromMinutes(5);
@@ -25,7 +32,7 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             var n = Base64Url.Decode(providerInformation.KeySet.Keys.First().N);
             var pubKey = PublicKey.New(e, n);
 
-            var json = JosePCL.Jwt.Decode(identityToken, pubKey);
+            var json = Jwt.Decode(identityToken, pubKey);
             var payload = JObject.Parse(json);
 
             var issuer = payload["iss"].ToString();
