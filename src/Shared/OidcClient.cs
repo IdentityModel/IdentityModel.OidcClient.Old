@@ -153,7 +153,7 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            if (!ValidateAccessTokenHash(authorizeResponse.AccessToken, validationResult.Claims))
+            if (!ValidateAccessTokenHash(tokenResponse.AccessToken, validationResult.Claims))
             {
                 result.Error = "invalid access token hash";
                 return result;

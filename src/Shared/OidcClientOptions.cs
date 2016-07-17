@@ -27,7 +27,7 @@ namespace IdentityModel.OidcClient
         public bool LoadProfile { get; set; } = true;
         public bool FilterClaims { get; set; } = true;
         public AuthenticationStyle Style = AuthenticationStyle.Hybrid;
-        
+
         public TimeSpan WebViewTimeout { get; set; } = TimeSpan.FromSeconds(10);
         public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(30);
         public HttpMessageHandler BackchannelHandler { get; set; }
@@ -57,7 +57,7 @@ namespace IdentityModel.OidcClient
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
             if (string.IsNullOrWhiteSpace(scope)) throw new ArgumentNullException(nameof(scope));
             if (string.IsNullOrWhiteSpace(redirectUri)) throw new ArgumentNullException(nameof(redirectUri));
-            
+
             ClientId = clientId;
             ClientSecret = clientSecret;
             Scope = scope;
