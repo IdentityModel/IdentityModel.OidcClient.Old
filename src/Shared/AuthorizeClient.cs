@@ -68,8 +68,12 @@ namespace IdentityModel.OidcClient
 
         public async Task EndSessionAsync(string identityToken = null, bool trySilent = true)
         {
-            string url = (await _options.GetProviderInformationAsync()).EndSessionEndpoint;
+            if (_options.WebView == null)
+            {
+                throw new InvalidOperationException("No web view defined.");
+            }
 
+            string url = (await _options.GetProviderInformationAsync()).EndSessionEndpoint;
             if (url.IsMissing())
             {
                 throw new InvalidOperationException("no endsession_endpoint defined");
