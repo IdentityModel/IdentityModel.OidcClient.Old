@@ -70,6 +70,11 @@ namespace IdentityModel.OidcClient
         {
             string url = (await _options.GetProviderInformationAsync()).EndSessionEndpoint;
 
+            if (url.IsMissing())
+            {
+                throw new InvalidOperationException("no endsession_endpoint defined");
+            }
+
             if (!string.IsNullOrWhiteSpace(identityToken))
             {
                 url += $"?{OidcConstants.EndSessionRequest.IdTokenHint}={identityToken}" +
