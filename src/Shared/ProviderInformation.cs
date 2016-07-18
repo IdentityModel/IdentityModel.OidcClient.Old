@@ -35,7 +35,7 @@ namespace IdentityModel.OidcClient
             var client = new HttpClient();
             var url = authority.EnsureTrailingSlash() + ".well-known/openid-configuration";
 
-            Logger.Debug("fetching discovery document from: " + url);
+            Logger.Debug($"fetching discovery document from: {url}");
 
             var json = await client.GetStringAsync(url).ConfigureAwait(false);
             var doc = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
@@ -44,7 +44,7 @@ namespace IdentityModel.OidcClient
             if (doc.ContainsKey("issuer"))
             {
                 info.IssuerName = doc["issuer"].ToString();
-                Logger.Debug("issuer name: " + info.IssuerName);
+                Logger.Debug($"issuer name: {info.IssuerName}");
             }
             else
             {
@@ -57,7 +57,7 @@ namespace IdentityModel.OidcClient
             if (doc.ContainsKey("authorization_endpoint"))
             {
                 info.AuthorizeEndpoint = doc["authorization_endpoint"].ToString();
-                Logger.Debug("authorization endpoint: " + info.AuthorizeEndpoint );
+                Logger.Debug($"authorization endpoint: {info.AuthorizeEndpoint}");
             }
             else
             {
@@ -70,7 +70,7 @@ namespace IdentityModel.OidcClient
             if (doc.ContainsKey("token_endpoint"))
             {
                 info.TokenEndpoint = doc["token_endpoint"].ToString();
-                Logger.Debug("token endpoint: " + info.TokenEndpoint);
+                Logger.Debug($"token endpoint: {info.TokenEndpoint}");
             }
             else
             {
@@ -83,7 +83,7 @@ namespace IdentityModel.OidcClient
             if (doc.ContainsKey("end_session_endpoint"))
             {
                 info.EndSessionEndpoint = doc["end_session_endpoint"].ToString();
-                Logger.Debug("end_session endpoint: " + info.EndSessionEndpoint);
+                Logger.Debug($"end_session endpoint: {info.EndSessionEndpoint}");
             }
             else
             {
@@ -93,7 +93,7 @@ namespace IdentityModel.OidcClient
             if (doc.ContainsKey("userinfo_endpoint"))
             {
                 info.UserInfoEndpoint = doc["userinfo_endpoint"].ToString();
-                Logger.Debug("userinfo_endpoint: " + info.UserInfoEndpoint);
+                Logger.Debug($"userinfo_endpoint: {info.UserInfoEndpoint}");
             }
             else
             {
@@ -106,7 +106,7 @@ namespace IdentityModel.OidcClient
                 var jwksUri = doc["jwks_uri"].ToString();
                 var jwks = await client.GetStringAsync(jwksUri).ConfigureAwait(false);
 
-                Logger.Debug("jwk: " + jwks);
+                Logger.Debug($"jwks: {jwks}");
                 info.KeySet = new JsonWebKeySet(jwks);
             }
             else

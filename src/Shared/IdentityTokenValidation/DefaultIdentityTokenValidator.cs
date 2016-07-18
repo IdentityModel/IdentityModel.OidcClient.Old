@@ -20,7 +20,7 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
         public Task<IdentityTokenValidationResult> ValidateAsync(string identityToken, string clientId, ProviderInformation providerInformation)
         {
             Logger.Debug("starting identity token validation");
-            Logger.Debug("identity token: " + identityToken);
+            Logger.Debug($"identity token: {identityToken}");
 
             var fail = new IdentityTokenValidationResult
             {
@@ -37,10 +37,10 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             var payload = JObject.Parse(json);
 
             var issuer = payload["iss"].ToString();
-            Logger.Debug("issuer: " + issuer);
+            Logger.Debug($"issuer: {issuer}");
 
             var audience = payload["aud"].ToString();
-            Logger.Debug("audience: " + issuer);
+            Logger.Debug($"audience: {audience}");
 
             if (issuer != providerInformation.IssuerName)
             {
@@ -62,11 +62,11 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             var exp = payload.Value<long>("exp");
             var nbf = payload.Value<long?>("nbf");
 
-            Logger.Debug("exp: " + exp.ToString());
+            Logger.Debug($"exp: {exp}");
             
             if (nbf != null)
             {
-                Logger.Debug("nbf: " + nbf.ToString());
+                Logger.Debug($"nbf: {nbf}");
 
                 var notBefore = nbf.Value.ToDateTimeFromEpoch();
                 if (notBefore > utcNow.Add(ClockSkew))
