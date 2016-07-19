@@ -213,6 +213,9 @@ namespace IdentityModel.OidcClient
                     };
                 }
 
+                Logger.Debug("profile claims:");
+                Logger.LogClaims(userInfoResult.Claims);
+
                 var primaryClaimTypes = claims.Select(c => c.Type).Distinct();
                 foreach (var claim in userInfoResult.Claims.Where(c => !primaryClaimTypes.Contains(c.Type)))
                 {
