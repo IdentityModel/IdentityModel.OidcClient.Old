@@ -193,11 +193,8 @@ namespace IdentityModel.OidcClient
                 AccessToken = tokenResult.AccessToken,
                 RefreshToken = tokenResult.RefreshToken,
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
-                AuthenticationTime = DateTime.Now,
-
-                // Identity token from the authorization endpoint is preferred when using hybrid flow (as it may contain c_hash).
-                // If using authorization code flow, the identity token is available in the response from the token endpoint.
-                IdentityToken = response.IdentityToken ?? tokenResult.IdentityToken,
+                IdentityToken = tokenResult.IdentityToken,
+                AuthenticationTime = DateTime.Now
             };
 
             if (!string.IsNullOrWhiteSpace(tokenResult.RefreshToken))
