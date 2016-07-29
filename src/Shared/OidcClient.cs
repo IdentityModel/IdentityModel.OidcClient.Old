@@ -238,8 +238,8 @@ namespace IdentityModel.OidcClient
                 AccessToken = tokenResult.AccessToken,
                 RefreshToken = tokenResult.RefreshToken,
                 AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
-                IdentityToken = response.IdentityToken,
-                AuthenticationTime = DateTime.Now,
+                IdentityToken = tokenResult.IdentityToken,
+                AuthenticationTime = DateTime.Now
             };
 
             if (!string.IsNullOrWhiteSpace(tokenResult.RefreshToken))
