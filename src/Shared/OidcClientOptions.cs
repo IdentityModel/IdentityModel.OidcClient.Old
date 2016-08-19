@@ -55,7 +55,6 @@ namespace IdentityModel.OidcClient
         {
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
 
-            //Raphael Londner, 2016/08/18 - stopped throwing an error when clientSecret is not provided (typically in PKCE cases)
             //if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
             if (string.IsNullOrWhiteSpace(scope)) throw new ArgumentNullException(nameof(scope));
             if (string.IsNullOrWhiteSpace(redirectUri)) throw new ArgumentNullException(nameof(redirectUri));

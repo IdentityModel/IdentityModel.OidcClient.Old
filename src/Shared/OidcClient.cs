@@ -316,7 +316,6 @@ namespace IdentityModel.OidcClient
 
             TokenClient tokenClient = null;
 
-            //Raphael Londner, 2016/08/18 - this is handling the situation where we don't pass the client secret (typically PKCE)
             if (_options.ClientSecret.IsMissing())
             {
                 tokenClient = new TokenClient(endpoint, _options.ClientId, AuthenticationStyle.PostValues);

@@ -94,7 +94,6 @@ namespace IdentityModel.OidcClient
         {
             var state = new AuthorizeState();
 
-            //Raphael Londner, 2016/08/18, State parameter is required by some identity providers (along with nonce)
             state.State = RNG.CreateUniqueId();
             state.Nonce = RNG.CreateUniqueId();
             state.RedirectUri = _options.RedirectUri;
@@ -108,7 +107,6 @@ namespace IdentityModel.OidcClient
         private string CreateCodeChallenge(AuthorizeState state)
         {
             state.CodeVerifier = RNG.CreateUniqueId();
-            state.CodeVerifier = "at83hsVcajT5nfc2FVnKSxI6bsuU2Tq2aoVhEFhEO1A";
             var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
 
             var challengeBuffer = sha256.HashData(
