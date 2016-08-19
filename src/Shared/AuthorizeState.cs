@@ -6,6 +6,8 @@ namespace IdentityModel.OidcClient
 {
     public class AuthorizeState
     {
+        //Raphael Londner, 2016/08/18, State parameter is required by some identity providers (along with nonce)
+        public string State { get; set; }
         public string Nonce { get; set; }
         public string CodeVerifier { get; set; }
 

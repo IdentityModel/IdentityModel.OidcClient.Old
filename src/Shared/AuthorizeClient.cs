@@ -94,6 +94,8 @@ namespace IdentityModel.OidcClient
         {
             var state = new AuthorizeState();
 
+            //Raphael Londner, 2016/08/18, State parameter is required by some identity providers (along with nonce)
+            state.State = RNG.CreateUniqueId();
             state.Nonce = RNG.CreateUniqueId();
             state.RedirectUri = _options.RedirectUri;
 
@@ -106,6 +108,7 @@ namespace IdentityModel.OidcClient
         private string CreateCodeChallenge(AuthorizeState state)
         {
             state.CodeVerifier = RNG.CreateUniqueId();
+            state.CodeVerifier = "at83hsVcajT5nfc2FVnKSxI6bsuU2Tq2aoVhEFhEO1A";
             var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
 
             var challengeBuffer = sha256.HashData(
@@ -126,7 +129,7 @@ namespace IdentityModel.OidcClient
             {
                 responseType = OidcConstants.ResponseTypes.Code;
             }
-            else if(_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
+            else if (_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
             {
                 responseType = OidcConstants.ResponseTypes.CodeIdToken;
             }
@@ -140,7 +143,8 @@ namespace IdentityModel.OidcClient
                 responseType: responseType,
                 scope: _options.Scope,
                 redirectUri: state.RedirectUri,
-                responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
+                responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : OidcConstants.ResponseModes.Fragment,
+                state: state.State,
                 nonce: state.Nonce,
                 codeChallenge: codeChallenge,
                 codeChallengeMethod: OidcConstants.CodeChallengeMethods.Sha256,
