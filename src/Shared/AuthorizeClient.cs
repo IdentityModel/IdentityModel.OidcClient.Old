@@ -141,7 +141,7 @@ namespace IdentityModel.OidcClient
                 responseType: responseType,
                 scope: _options.Scope,
                 redirectUri: state.RedirectUri,
-                responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : OidcConstants.ResponseModes.Fragment,
+                responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
                 state: state.State,
                 nonce: state.Nonce,
                 codeChallenge: codeChallenge,
