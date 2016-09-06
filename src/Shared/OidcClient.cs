@@ -127,11 +127,11 @@ namespace IdentityModel.OidcClient
             return await ProcessClaims(authorizeResponse, tokenResponse, validationResult.Claims);
         }
 
-        
+
         private async Task<LoginResult> ValidateCodeFlowResponse(AuthorizeResponse authorizeResponse, AuthorizeState state)
         {
             var result = new LoginResult { Success = false };
-            
+
             // redeem code for tokens
             var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
             if (tokenResponse.IsError || tokenResponse.IsHttpError)
@@ -314,7 +314,16 @@ namespace IdentityModel.OidcClient
         {
             var endpoint = (await _options.GetProviderInformationAsync()).TokenEndpoint;
 
-            var tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
+            TokenClient tokenClient = null;
+
+            if (_options.ClientSecret.IsMissing())
+            {
+                tokenClient = new TokenClient(endpoint, _options.ClientId, AuthenticationStyle.PostValues);
+            }
+            else
+            {
+                tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
+            }
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
                 code,
                 state.RedirectUri,

@@ -6,6 +6,7 @@ namespace IdentityModel.OidcClient
 {
     public class AuthorizeState
     {
+        public string State { get; set; }
         public string Nonce { get; set; }
         public string CodeVerifier { get; set; }
 

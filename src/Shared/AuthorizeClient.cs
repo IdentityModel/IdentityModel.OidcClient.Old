@@ -94,6 +94,7 @@ namespace IdentityModel.OidcClient
         {
             var state = new AuthorizeState();
 
+            state.State = RNG.CreateUniqueId();
             state.Nonce = RNG.CreateUniqueId();
             state.RedirectUri = _options.RedirectUri;
 
@@ -126,7 +127,7 @@ namespace IdentityModel.OidcClient
             {
                 responseType = OidcConstants.ResponseTypes.Code;
             }
-            else if(_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
+            else if (_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
             {
                 responseType = OidcConstants.ResponseTypes.CodeIdToken;
             }
@@ -141,6 +142,7 @@ namespace IdentityModel.OidcClient
                 scope: _options.Scope,
                 redirectUri: state.RedirectUri,
                 responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
+                state: state.State,
                 nonce: state.Nonce,
                 codeChallenge: codeChallenge,
                 codeChallengeMethod: OidcConstants.CodeChallengeMethods.Sha256,
