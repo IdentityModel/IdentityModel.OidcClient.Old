@@ -406,7 +406,16 @@ namespace IdentityModel.OidcClient
         {
             var endpoint = (await _options.GetProviderInformationAsync()).TokenEndpoint;
 
-            var tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
+            TokenClient tokenClient;
+            if (_options.ClientSecret.IsMissing())
+            {
+                tokenClient = new TokenClient(endpoint, _options.ClientId, AuthenticationStyle.PostValues);
+            }
+            else
+            {
+                tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
+            }
+            
             var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
                 code,
                 state.RedirectUri,
