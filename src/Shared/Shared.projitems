@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\IIdentityTokenValidator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IdentityTokenValidation\DefaultIdentityTokenValidator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\LoggingExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\NopLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\RNG.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\StringExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OidcClient.cs" />
