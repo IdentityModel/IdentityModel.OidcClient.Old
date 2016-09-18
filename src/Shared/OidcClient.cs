@@ -85,6 +85,22 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
+            if (string.IsNullOrEmpty(response.State))
+            {
+                result.Error = "missing state";
+                Logger.Error(result.Error);
+
+                return result;
+            }
+
+            if (!string.Equals(state.State, response.State, StringComparison.Ordinal))
+            {
+                result.Error = "invalids state";
+                Logger.Error(result.Error);
+
+                return result;
+            }
+
             if (_options.Style == OidcClientOptions.AuthenticationStyle.AuthorizationCode)
             {
                 return await ValidateCodeFlowResponseAsync(response, state);

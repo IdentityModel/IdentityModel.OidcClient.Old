@@ -104,6 +104,7 @@ namespace IdentityModel.OidcClient
             var state = new AuthorizeState();
 
             state.Nonce = RNG.CreateUniqueId();
+            state.State = RNG.CreateUniqueId();
             state.RedirectUri = _options.RedirectUri;
 
             string codeChallenge = CreateCodeChallenge(state);
@@ -151,6 +152,7 @@ namespace IdentityModel.OidcClient
                 redirectUri: state.RedirectUri,
                 responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
                 nonce: state.Nonce,
+                state: state.State,
                 codeChallenge: codeChallenge,
                 codeChallengeMethod: OidcConstants.CodeChallengeMethods.Sha256,
                 extra: extraParameters);
