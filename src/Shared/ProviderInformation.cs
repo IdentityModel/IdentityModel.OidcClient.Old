@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
+using Newtonsoft.Json.Linq;
+using System.Linq;
 
 namespace IdentityModel.OidcClient
 {
@@ -24,6 +26,7 @@ namespace IdentityModel.OidcClient
         public string AuthorizeEndpoint { get; set; }
         public string EndSessionEndpoint { get; set; }
         public string UserInfoEndpoint { get; set; }
+        public IEnumerable<string> TokenEndPointAuthenticationMethods { get; set; } = new string[] { };
 
         public void Validate()
         {
@@ -109,6 +112,12 @@ namespace IdentityModel.OidcClient
             else
             {
                 Logger.Debug("no userinfo_endpoint");
+            }
+
+            if (doc.ContainsKey("token_endpoint_auth_methods_supported"))
+            {
+                info.TokenEndPointAuthenticationMethods = 
+                    ((JArray)doc["token_endpoint_auth_methods_supported"]).Select(x => (string)x).ToArray();
             }
 
             // parse web key set
