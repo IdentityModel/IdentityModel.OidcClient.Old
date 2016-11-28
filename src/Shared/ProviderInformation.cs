@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace IdentityModel.OidcClient
 {
@@ -37,7 +38,17 @@ namespace IdentityModel.OidcClient
 
             Logger.Debug($"fetching discovery document from: {url}");
 
-            var json = await client.GetStringAsync(url).ConfigureAwait(false);
+            var response = await client.GetAsync(url).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = "an error occurred while retrieving the discovery document: " +
+                    await FormatErrorAsync(response).ConfigureAwait(false);
+
+                Logger.Error(error);
+                throw new InvalidOperationException(error);
+            }
+
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var doc = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
             var info = new ProviderInformation();
 
@@ -104,7 +115,18 @@ namespace IdentityModel.OidcClient
             if (doc.ContainsKey("jwks_uri"))
             {
                 var jwksUri = doc["jwks_uri"].ToString();
-                var jwks = await client.GetStringAsync(jwksUri).ConfigureAwait(false);
+
+                var jwksResponse = await client.GetAsync(jwksUri).ConfigureAwait(false);
+                if (!jwksResponse.IsSuccessStatusCode)
+                {
+                    var error = "an error occurred while retrieving the JWKS document: " +
+                        await FormatErrorAsync(jwksResponse).ConfigureAwait(false);
+
+                    Logger.Error(error);
+                    throw new InvalidOperationException(error);
+                }
+
+                var jwks = await jwksResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 Logger.Debug($"jwks: {jwks}");
                 info.KeySet = new JsonWebKeySet(jwks);
@@ -118,6 +140,17 @@ namespace IdentityModel.OidcClient
             }
 
             return info;
+        }
+
+        private static async Task<string> FormatErrorAsync(HttpResponseMessage response)
+        {
+            var output = new StringBuilder();
+
+            output.Append("Status: " + response.StatusCode + ";");
+            output.Append("Headers: " + response.Headers.ToString() + ";");
+            output.Append("Body: " + await response.Content.ReadAsStringAsync().ConfigureAwait(false) + ";");
+
+            return output.ToString();
         }
     }
 }
