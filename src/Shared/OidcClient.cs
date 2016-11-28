@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using PCLCrypto;
 using static PCLCrypto.WinRTCrypto;
 using IdentityModel.OidcClient.Logging;
+using System.Net.Http;
 
 namespace IdentityModel.OidcClient
 {
@@ -19,6 +20,8 @@ namespace IdentityModel.OidcClient
 
         private readonly AuthorizeClient _authorizeClient;
         private readonly OidcClientOptions _options;
+
+        private TokenClient _tokenClient;
 
         public OidcClient(OidcClientOptions options)
         {
@@ -404,19 +407,9 @@ namespace IdentityModel.OidcClient
 
         private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
         {
-            var endpoint = (await _options.GetProviderInformationAsync()).TokenEndpoint;
+            var client = await GetTokenClientAsync();
 
-            TokenClient tokenClient;
-            if (_options.ClientSecret.IsMissing())
-            {
-                tokenClient = new TokenClient(endpoint, _options.ClientId, AuthenticationStyle.PostValues);
-            }
-            else
-            {
-                tokenClient = new TokenClient(endpoint, _options.ClientId, _options.ClientSecret);
-            }
-            
-            var tokenResult = await tokenClient.RequestAuthorizationCodeAsync(
+            var tokenResult = await client.RequestAuthorizationCodeAsync(
                 code,
                 state.RedirectUri,
                 codeVerifier: state.CodeVerifier);
@@ -427,10 +420,12 @@ namespace IdentityModel.OidcClient
         public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
         {
             var providerInfo = await _options.GetProviderInformationAsync();
+            var handler = _options.BackchannelHandler ?? new HttpClientHandler();
 
-            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken);
+            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken, handler);
+            userInfoClient.Timeout = _options.BackchannelTimeout;
+
             var userInfoResponse = await userInfoClient.GetAsync();
-
             if (userInfoResponse.IsError)
             {
                 return new UserInfoResult
@@ -449,14 +444,8 @@ namespace IdentityModel.OidcClient
 
         public async Task<RefreshTokenResult> RefreshTokenAsync(string refreshToken)
         {
-            var providerInfo = await _options.GetProviderInformationAsync();
-
-            var tokenClient = new TokenClient(
-                providerInfo.TokenEndpoint,
-                _options.ClientId,
-                _options.ClientSecret);
-
-            var response = await tokenClient.RequestRefreshTokenAsync(refreshToken);
+            var client = await GetTokenClientAsync();
+            var response = await client.RequestRefreshTokenAsync(refreshToken);
 
             if (response.IsError)
             {
@@ -491,6 +480,31 @@ namespace IdentityModel.OidcClient
             Logger.LogClaims(claims);
 
             return claims;
+        }
+
+        private async Task<TokenClient> GetTokenClientAsync()
+        {
+            if (_tokenClient == null)
+            {
+                var info = await _options.GetProviderInformationAsync().ConfigureAwait(false);
+                var handler = _options.BackchannelHandler ?? new HttpClientHandler();
+
+                TokenClient tokenClient;
+                if (_options.ClientSecret.IsMissing())
+                {
+                    tokenClient = new TokenClient(info.TokenEndpoint, _options.ClientId, handler);
+                }
+                else
+                {
+                    tokenClient = new TokenClient(info.TokenEndpoint, _options.ClientId, _options.ClientSecret, handler, _options.TokenClientAuthenticationStyle);
+                }
+
+                tokenClient.Timeout = _options.BackchannelTimeout;
+
+                _tokenClient = tokenClient;
+            }
+
+            return _tokenClient;
         }
     }
 }

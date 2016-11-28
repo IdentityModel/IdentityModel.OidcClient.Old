@@ -29,6 +29,8 @@ namespace IdentityModel.OidcClient
         public AuthenticationStyle Style = AuthenticationStyle.Hybrid;
 
         public TimeSpan WebViewTimeout { get; set; } = TimeSpan.FromSeconds(10);
+        public Client.AuthenticationStyle TokenClientAuthenticationStyle { get; set; } = Client.AuthenticationStyle.BasicAuthentication;
+
         public TimeSpan BackchannelTimeout { get; set; } = TimeSpan.FromSeconds(30);
         public HttpMessageHandler BackchannelHandler { get; set; }
 
