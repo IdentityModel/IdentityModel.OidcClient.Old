@@ -137,6 +137,7 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
 
             var kid = header["kid"].ToString();
             var alg = header["alg"].ToString();
+            Logger.Debug("Token signing algorithm: " + alg);
 
             var key = LoadKey(keySet, kid);
             if (key == null)

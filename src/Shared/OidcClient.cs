@@ -147,7 +147,8 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            if (!ValidateAuthorizationCodeHash(authorizeResponse.Code, validationResult.Claims))
+            var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
+            if (!ValidateAuthorizationCodeHash(authorizeResponse.Code, signingAlgorithmBits, validationResult.Claims))
             {
                 result.Error = "invalid c_hash";
                 Logger.Error(result.Error);
@@ -169,13 +170,13 @@ namespace IdentityModel.OidcClient
             return await ProcessClaimsAsync(authorizeResponse, tokenResponse, validationResult.Claims);
         }
 
-        
+
         private async Task<LoginResult> ValidateCodeFlowResponseAsync(AuthorizeResponse authorizeResponse, AuthorizeState state)
         {
             Logger.Debug("ValidateCodeFlowResponse");
 
             var result = new LoginResult { Success = false };
-            
+
             // redeem code for tokens
             var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
             if (tokenResponse.IsError || tokenResponse.IsHttpError)
@@ -201,7 +202,8 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            if (!ValidateAccessTokenHash(tokenResponse.AccessToken, validationResult.Claims))
+            var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
+            if (!ValidateAccessTokenHash(tokenResponse.AccessToken, signingAlgorithmBits, validationResult.Claims))
             {
                 result.Error = "invalid access token hash";
                 Logger.Error(result.Error);
@@ -293,7 +295,7 @@ namespace IdentityModel.OidcClient
 
             Logger.Debug("identity token validation claims:");
             Logger.LogClaims(claims);
-            
+
             // validate audience
             var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
             if (!string.Equals(_options.ClientId, audience))
@@ -338,7 +340,7 @@ namespace IdentityModel.OidcClient
             return match;
         }
 
-        private bool ValidateAuthorizationCodeHash(string code, Claims claims)
+        private bool ValidateAuthorizationCodeHash(string code, int signingAlgorithmBits, Claims claims)
         {
             Logger.Debug("validate authorization code hash");
 
@@ -348,17 +350,21 @@ namespace IdentityModel.OidcClient
                 return true;
             }
 
-            var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
+            var hashAlgorithm = GetHashAlgorithm(signingAlgorithmBits);
+            if (hashAlgorithm == null)
+            {
+                Logger.Error("No appropriate hashing algorithm found.");
+            }
 
-            var codeHash = sha256.HashData(
+            var codeHash = hashAlgorithm.HashData(
                 CryptographicBuffer.CreateFromByteArray(
                     Encoding.UTF8.GetBytes(code)));
 
             byte[] codeHashArray;
             CryptographicBuffer.CopyToByteArray(codeHash, out codeHashArray);
 
-            byte[] leftPart = new byte[16];
-            Array.Copy(codeHashArray, leftPart, 16);
+            byte[] leftPart = new byte[signingAlgorithmBits/16];
+            Array.Copy(codeHashArray, leftPart, signingAlgorithmBits / 16);
 
             var leftPartB64 = Base64Url.Encode(leftPart);
             var match = leftPartB64.Equals(cHash);
@@ -371,7 +377,7 @@ namespace IdentityModel.OidcClient
             return match;
         }
 
-        private bool ValidateAccessTokenHash(string accessToken, Claims claims)
+        private bool ValidateAccessTokenHash(string accessToken, int signingAlgorithmBits, Claims claims)
         {
             Logger.Debug("validate authorization code hash");
 
@@ -381,17 +387,21 @@ namespace IdentityModel.OidcClient
                 return true;
             }
 
-            var sha256 = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
+            var hashAlgorithm = GetHashAlgorithm(signingAlgorithmBits);
+            if (hashAlgorithm == null)
+            {
+                Logger.Error("No appropriate hashing algorithm found.");
+            }
 
-            var codeHash = sha256.HashData(
+            var codeHash = hashAlgorithm.HashData(
                 CryptographicBuffer.CreateFromByteArray(
                     Encoding.UTF8.GetBytes(accessToken)));
 
             byte[] atHashArray;
             CryptographicBuffer.CopyToByteArray(codeHash, out atHashArray);
 
-            byte[] leftPart = new byte[16];
-            Array.Copy(atHashArray, leftPart, 16);
+            byte[] leftPart = new byte[signingAlgorithmBits/16];
+            Array.Copy(atHashArray, leftPart, signingAlgorithmBits / 16);
 
             var leftPartB64 = Base64Url.Encode(leftPart);
 
@@ -480,6 +490,26 @@ namespace IdentityModel.OidcClient
             Logger.LogClaims(claims);
 
             return claims;
+        }
+
+        private IHashAlgorithmProvider GetHashAlgorithm(int signingAlgorithmBits)
+        {
+            Logger.Debug($"determining hash algorithm for {signingAlgorithmBits} bits");
+
+            switch (signingAlgorithmBits)
+            {
+                case 256:
+                    Logger.Debug("SHA256");
+                    return HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
+                case 384:
+                    Logger.Debug("SHA384");
+                    return HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha384);
+                case 512:
+                    Logger.Debug("SHA512");
+                    return HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha512);
+                default:
+                    return null;
+            }
         }
 
         private async Task<TokenClient> GetTokenClientAsync()
