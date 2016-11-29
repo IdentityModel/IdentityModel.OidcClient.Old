@@ -8,6 +8,10 @@ using System.Linq;
 using JosePCL.Keys.Rsa;
 using Newtonsoft.Json.Linq;
 using IdentityModel.OidcClient.Logging;
+using IdentityModel.Jwt;
+using System.Collections.Generic;
+using JosePCL.Serialization;
+using PCLCrypto;
 
 namespace IdentityModel.OidcClient.IdentityTokenValidation
 {
@@ -22,24 +26,33 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             Logger.Debug("starting identity token validation");
             Logger.Debug($"identity token: {identityToken}");
 
-            var fail = new IdentityTokenValidationResult
+            var fail = new IdentityTokenValidationResult { Success = false };
+
+            ValidatedToken token;
+            try
             {
-                Success = false
-            };
+                token = ValidateSignature(identityToken, providerInformation.KeySet);
+            }
+            catch (Exception ex)
+            {
+                fail.Error = ex.ToString();
+                Logger.Error(fail.Error);
 
-            var e = Base64Url.Decode(providerInformation.KeySet.Keys.First().E);
-            var n = Base64Url.Decode(providerInformation.KeySet.Keys.First().N);
-            var pubKey = PublicKey.New(e, n);
+                return Task.FromResult(fail);
+            }
 
-            var json = JosePCL.Jwt.Decode(identityToken, pubKey);
-            Logger.Debug("decoded JWT: " + json);
+            if (!token.Success)
+            {
+                fail.Error = token.Error;
+                Logger.Error(fail.Error);
 
-            var payload = JObject.Parse(json);
+                return Task.FromResult(fail);
+            }
 
-            var issuer = payload["iss"].ToString();
+            var issuer = token.Payload["iss"].ToString();
             Logger.Debug($"issuer: {issuer}");
 
-            var audience = payload["aud"].ToString();
+            var audience = token.Payload["aud"].ToString();
             Logger.Debug($"audience: {audience}");
 
             if (issuer != providerInformation.IssuerName)
@@ -59,8 +72,8 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             }
 
             var utcNow = DateTime.UtcNow;
-            var exp = payload.Value<long>("exp");
-            var nbf = payload.Value<long?>("nbf");
+            var exp = token.Payload.Value<long>("exp");
+            var nbf = token.Payload.Value<long?>("nbf");
 
             Logger.Debug($"exp: {exp}");
             
@@ -92,10 +105,61 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             return Task.FromResult(new IdentityTokenValidationResult
             {
                 Success = true,
-                Claims = payload.ToClaims(),
-                SignatureAlgorithm = "RS256"
+                Claims = token.Payload.ToClaims(),
+                SignatureAlgorithm = token.Algorithm
             });
+        }
 
+        ICryptographicKey LoadKey(JsonWebKeySet keySet, string kid)
+        {
+            Logger.Debug("Searching keyset for id: " + kid);
+
+            foreach (var webkey in keySet.Keys)
+            {
+                if (webkey.Kid == kid)
+                {
+                    var e = Base64Url.Decode(webkey.E);
+                    var n = Base64Url.Decode(webkey.N);
+
+                    Logger.Debug("found");
+                    return PublicKey.New(e, n);
+                }
+            }
+
+            Logger.Debug("Key not found");
+            return null;
+        }
+
+        ValidatedToken ValidateSignature(string token, JsonWebKeySet keySet)
+        {
+            var parts = Compact.Parse(token);
+            var header = JObject.Parse(parts.First().Utf8);
+
+            var kid = header["kid"].ToString();
+            var alg = header["alg"].ToString();
+
+            var key = LoadKey(keySet, kid);
+            if (key == null)
+            {
+                return new ValidatedToken
+                {
+                    Success = false,
+                    Error = "No key found that matches the kid of the token"
+                };
+            }
+
+            var json = JosePCL.Jwt.Decode(token, key);
+            Logger.Debug("decoded JWT: " + json);
+
+            var payload = JObject.Parse(json);
+
+            return new ValidatedToken
+            {
+                Success = true,
+                KeyId = kid,
+                Algorithm = alg,
+                Payload = payload
+            };
         }
     }
 }
