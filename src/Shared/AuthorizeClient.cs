@@ -36,7 +36,6 @@ namespace IdentityModel.OidcClient
             InvokeResult wviResult;
             AuthorizeResult result = new AuthorizeResult
             {
-                Success = false,
                 State = await CreateAuthorizeStateAsync(extraParameters)
             };
 
@@ -56,9 +55,7 @@ namespace IdentityModel.OidcClient
 
             if (wviResult.ResultType == InvokeResultType.Success)
             {
-                result.Success = true;
                 result.Data = wviResult.Response;
-
                 return result;
             }
 

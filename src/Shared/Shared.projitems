@@ -23,6 +23,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\NopLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\RNG.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\StringExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Infrastructure\TokenClientFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Jose-Pcl\JwsAlgorithms.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Jose-Pcl\jws\HmacUsingSha.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Jose-Pcl\jws\IJwsSigner.cs" />
@@ -39,9 +40,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)OidcClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OidcClientOptions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ProviderInformation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ResponseValidator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\AuthorizeResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\LoginResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\RefreshTokenResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\ResponseValidationResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\Result.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\UserInfoResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\DisplayMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\HiddenModeFailedEventArgs.cs" />

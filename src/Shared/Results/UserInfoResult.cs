@@ -4,11 +4,8 @@
 
 namespace IdentityModel.OidcClient
 {
-    public class UserInfoResult
+    public class UserInfoResult : Result
     {
-        public bool Success { get; set; }
-        public string Error { get; set; }
-
         public Claims Claims { get; set; }
     }
 }

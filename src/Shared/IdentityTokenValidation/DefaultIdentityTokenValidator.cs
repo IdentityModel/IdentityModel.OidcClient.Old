@@ -9,7 +9,6 @@ using JosePCL.Keys.Rsa;
 using Newtonsoft.Json.Linq;
 using IdentityModel.OidcClient.Logging;
 using IdentityModel.Jwt;
-using System.Collections.Generic;
 using JosePCL.Serialization;
 using PCLCrypto;
 

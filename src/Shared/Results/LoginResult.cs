@@ -7,10 +7,17 @@ using System.Net.Http;
 
 namespace IdentityModel.OidcClient
 {
-    public class LoginResult
+    public class LoginResult : Result
     {
-        public bool Success { get; set; }
-        public string Error { get; set; }
+        public LoginResult()
+        {
+
+        }
+
+        public LoginResult(string errorMessage)
+        {
+            Error = errorMessage;
+        }
 
         public Claims Claims { get; set; }
         public string AccessToken { get; set; }

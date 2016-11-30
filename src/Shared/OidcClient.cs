@@ -5,12 +5,10 @@
 using IdentityModel.Client;
 using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using PCLCrypto;
-using static PCLCrypto.WinRTCrypto;
 using IdentityModel.OidcClient.Logging;
 using System.Net.Http;
+using IdentityModel.OidcClient.Infrastructure;
 
 namespace IdentityModel.OidcClient
 {
@@ -20,18 +18,19 @@ namespace IdentityModel.OidcClient
 
         private readonly AuthorizeClient _authorizeClient;
         private readonly OidcClientOptions _options;
-
-        private TokenClient _tokenClient;
-
-        public OidcClient(OidcClientOptions options)
-        {
-            _authorizeClient = new AuthorizeClient(options);
-            _options = options;
-        }
+        private readonly ResponseValidator _validator;
 
         public OidcClientOptions Options
         {
             get { return _options; }
+        }
+
+        public OidcClient(OidcClientOptions options)
+        {
+            _authorizeClient = new AuthorizeClient(options);
+            _validator = new ResponseValidator(options);
+
+            _options = options;
         }
 
         public async Task<LoginResult> LoginAsync(bool trySilent = false, object extraParameters = null)
@@ -42,11 +41,7 @@ namespace IdentityModel.OidcClient
 
             if (!authorizeResult.Success)
             {
-                return new LoginResult
-                {
-                    Success = false,
-                    Error = authorizeResult.Error
-                };
+                return new LoginResult(authorizeResult.Error);
             }
 
             return await ValidateResponseAsync(authorizeResult.Data, authorizeResult.State);
@@ -66,155 +61,67 @@ namespace IdentityModel.OidcClient
 
         public async Task<LoginResult> ValidateResponseAsync(string data, AuthorizeState state)
         {
-            Logger.Debug("ValidateResponseAsync");
-
-            var result = new LoginResult { Success = false };
-
+            Logger.Debug("Validate authorize response");
+            
             var response = new AuthorizeResponse(data);
 
             if (response.IsError)
             {
-                result.Error = response.Error;
-                Logger.Error(result.Error);
+                Logger.Error(response.Error);
 
-                return result;
+                return new LoginResult(response.Error);
             }
 
             if (string.IsNullOrEmpty(response.Code))
             {
-                result.Error = "missing authorization code";
-                Logger.Error(result.Error);
+                var error = "Missing authorization code";
+                Logger.Error(error);
 
-                return result;
+                return new LoginResult(error);
             }
 
             if (string.IsNullOrEmpty(response.State))
             {
-                result.Error = "missing state";
-                Logger.Error(result.Error);
+                var error = "Missing state";
+                Logger.Error(error);
 
-                return result;
+                return new LoginResult(error);
             }
 
             if (!string.Equals(state.State, response.State, StringComparison.Ordinal))
             {
-                result.Error = "invalids state";
-                Logger.Error(result.Error);
+                var error = "Invalid state";
+                Logger.Error(error);
 
-                return result;
+                return new LoginResult(error);
             }
 
+            ResponseValidationResult validationResult = null;
             if (_options.Style == OidcClientOptions.AuthenticationStyle.AuthorizationCode)
             {
-                return await ValidateCodeFlowResponseAsync(response, state);
+                validationResult = await _validator.ValidateCodeFlowResponseAsync(response, state);
             }
             else if (_options.Style == OidcClientOptions.AuthenticationStyle.Hybrid)
             {
-                return await ValidateHybridFlowResponseAsync(response, state);
+                validationResult = await _validator.ValidateHybridFlowResponseAsync(response, state);
             }
-
-            throw new InvalidOperationException("Invalid authentication style");
-        }
-
-        private async Task<LoginResult> ValidateHybridFlowResponseAsync(AuthorizeResponse authorizeResponse, AuthorizeState state)
-        {
-            Logger.Debug("ValidateHybridFlowResponse");
-
-            var result = new LoginResult { Success = false };
-
-            if (string.IsNullOrEmpty(authorizeResponse.IdentityToken))
+            else
             {
-                result.Error = "missing identity token";
-                Logger.Error(result.Error);
-
-                return result;
+                throw new InvalidOperationException("Invalid authentication style");
             }
 
-            var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
             if (!validationResult.Success)
-            {
-                result.Error = validationResult.Error ?? "identity token validation error";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            if (!ValidateNonce(state.Nonce, validationResult.Claims))
-            {
-                result.Error = "invalid nonce";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
-            if (!ValidateAuthorizationCodeHash(authorizeResponse.Code, signingAlgorithmBits, validationResult.Claims))
-            {
-                result.Error = "invalid c_hash";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            // redeem code for tokens
-            var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
-            if (tokenResponse.IsError || tokenResponse.IsHttpError)
             {
                 return new LoginResult
                 {
-                    Success = false,
-                    Error = tokenResponse.Error
+                    Error = validationResult.Error
                 };
             }
 
-            return await ProcessClaimsAsync(authorizeResponse, tokenResponse, validationResult.Claims);
+            return await ProcessClaimsAsync(validationResult);
         }
 
-
-        private async Task<LoginResult> ValidateCodeFlowResponseAsync(AuthorizeResponse authorizeResponse, AuthorizeState state)
-        {
-            Logger.Debug("ValidateCodeFlowResponse");
-
-            var result = new LoginResult { Success = false };
-
-            // redeem code for tokens
-            var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
-            if (tokenResponse.IsError || tokenResponse.IsHttpError)
-            {
-                result.Error = tokenResponse.Error;
-                return result;
-            }
-
-            if (tokenResponse.IdentityToken.IsMissing())
-            {
-                result.Error = "missing identity token";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            var validationResult = await ValidateIdentityTokenAsync(tokenResponse.IdentityToken);
-            if (!validationResult.Success)
-            {
-                result.Error = validationResult.Error ?? "identity token validation error";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
-            if (!ValidateAccessTokenHash(tokenResponse.AccessToken, signingAlgorithmBits, validationResult.Claims))
-            {
-                result.Error = "invalid access token hash";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            return await ProcessClaimsAsync(authorizeResponse, tokenResponse, validationResult.Claims);
-        }
-
-        private async Task<LoginResult> ProcessClaimsAsync(AuthorizeResponse response, TokenResponse tokenResult, Claims claims)
+        private async Task<LoginResult> ProcessClaimsAsync(ResponseValidationResult result)
         {
             Logger.Debug("ProcessClaimsAsync");
 
@@ -223,208 +130,49 @@ namespace IdentityModel.OidcClient
             {
                 Logger.Debug("load profile");
 
-                var userInfoResult = await GetUserInfoAsync(tokenResult.AccessToken);
+                var userInfoResult = await GetUserInfoAsync(result.TokenResponse.AccessToken);
 
                 if (!userInfoResult.Success)
                 {
-                    return new LoginResult
-                    {
-                        Success = false,
-                        Error = userInfoResult.Error
-                    };
+                    return new LoginResult(userInfoResult.Error);
                 }
 
                 Logger.Debug("profile claims:");
                 Logger.LogClaims(userInfoResult.Claims);
 
-                var primaryClaimTypes = claims.Select(c => c.Type).Distinct();
+                var primaryClaimTypes = result.Claims.Select(c => c.Type).Distinct();
                 foreach (var claim in userInfoResult.Claims.Where(c => !primaryClaimTypes.Contains(c.Type)))
                 {
-                    claims.Add(claim);
+                    result.Claims.Add(claim);
                 }
-
-                Logger.LogClaims(claims);
             }
             else
             {
                 Logger.Debug("don't load profile");
-                Logger.LogClaims(claims);
             }
 
             // success
             var loginResult = new LoginResult
             {
-                Success = true,
-                Claims = FilterClaims(claims),
-                AccessToken = tokenResult.AccessToken,
-                RefreshToken = tokenResult.RefreshToken,
-                AccessTokenExpiration = DateTime.Now.AddSeconds(tokenResult.ExpiresIn),
-                IdentityToken = tokenResult.IdentityToken,
+                Claims = FilterClaims(result.Claims),
+                AccessToken = result.TokenResponse.AccessToken,
+                RefreshToken = result.TokenResponse.RefreshToken,
+                AccessTokenExpiration = DateTime.Now.AddSeconds(result.TokenResponse.ExpiresIn),
+                IdentityToken = result.TokenResponse.IdentityToken,
                 AuthenticationTime = DateTime.Now
             };
 
-            if (!string.IsNullOrWhiteSpace(tokenResult.RefreshToken))
+            if (!string.IsNullOrWhiteSpace(result.TokenResponse.RefreshToken))
             {
                 var providerInfo = await _options.GetProviderInformationAsync();
 
                 loginResult.Handler = new RefeshTokenHandler(
-                    providerInfo.TokenEndpoint,
-                    _options.ClientId,
-                    _options.ClientSecret,
-                    tokenResult.RefreshToken,
-                    tokenResult.AccessToken);
+                    await TokenClientFactory.CreateAsync(_options),
+                    result.TokenResponse.RefreshToken,
+                    result.TokenResponse.AccessToken);
             }
 
             return loginResult;
-        }
-
-
-        private async Task<IdentityTokenValidationResult> ValidateIdentityTokenAsync(string idToken)
-        {
-            var providerInfo = await _options.GetProviderInformationAsync();
-
-            Logger.Debug("Calling identity token validator: " + _options.IdentityTokenValidator.GetType().FullName);
-            var validationResult = await _options.IdentityTokenValidator.ValidateAsync(idToken, _options.ClientId, providerInfo);
-
-            if (validationResult.Success == false)
-            {
-                return validationResult;
-            }
-
-            var claims = validationResult.Claims;
-
-            Logger.Debug("identity token validation claims:");
-            Logger.LogClaims(claims);
-
-            // validate audience
-            var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
-            if (!string.Equals(_options.ClientId, audience))
-            {
-                Logger.Error($"client id ({_options.ClientId}) does not match audience ({audience})");
-
-                return new IdentityTokenValidationResult
-                {
-                    Success = false,
-                    Error = "invalid audience"
-                };
-            }
-
-            // validate issuer
-            var issuer = claims.FindFirst(JwtClaimTypes.Issuer)?.Value ?? "";
-            if (!string.Equals(providerInfo.IssuerName, issuer))
-            {
-                Logger.Error($"configured issuer ({providerInfo.IssuerName}) does not match token issuer ({issuer}");
-
-                return new IdentityTokenValidationResult
-                {
-                    Success = false,
-                    Error = "invalid issuer"
-                };
-            }
-
-            return validationResult;
-        }
-
-        private bool ValidateNonce(string nonce, Claims claims)
-        {
-            Logger.Debug("validate nonce");
-
-            var tokenNonce = claims.FindFirst(JwtClaimTypes.Nonce)?.Value ?? "";
-            var match = string.Equals(nonce, tokenNonce, StringComparison.Ordinal);
-
-            if (!match)
-            {
-                Logger.Error($"nonce ({nonce}) does not match nonce from token ({tokenNonce})");
-            }
-
-            return match;
-        }
-
-        private bool ValidateAuthorizationCodeHash(string code, int signingAlgorithmBits, Claims claims)
-        {
-            Logger.Debug("validate authorization code hash");
-
-            var cHash = claims.FindFirst(JwtClaimTypes.AuthorizationCodeHash)?.Value ?? "";
-            if (cHash.IsMissing())
-            {
-                return true;
-            }
-
-            var hashAlgorithm = GetHashAlgorithm(signingAlgorithmBits);
-            if (hashAlgorithm == null)
-            {
-                Logger.Error("No appropriate hashing algorithm found.");
-            }
-
-            var codeHash = hashAlgorithm.HashData(
-                CryptographicBuffer.CreateFromByteArray(
-                    Encoding.UTF8.GetBytes(code)));
-
-            byte[] codeHashArray;
-            CryptographicBuffer.CopyToByteArray(codeHash, out codeHashArray);
-
-            byte[] leftPart = new byte[signingAlgorithmBits/16];
-            Array.Copy(codeHashArray, leftPart, signingAlgorithmBits / 16);
-
-            var leftPartB64 = Base64Url.Encode(leftPart);
-            var match = leftPartB64.Equals(cHash);
-
-            if (!match)
-            {
-                Logger.Error($"code hash ({leftPartB64}) does not match c_hash from token ({cHash})");
-            }
-
-            return match;
-        }
-
-        private bool ValidateAccessTokenHash(string accessToken, int signingAlgorithmBits, Claims claims)
-        {
-            Logger.Debug("validate authorization code hash");
-
-            var atHash = claims.FindFirst(JwtClaimTypes.AccessTokenHash)?.Value ?? "";
-            if (atHash.IsMissing())
-            {
-                return true;
-            }
-
-            var hashAlgorithm = GetHashAlgorithm(signingAlgorithmBits);
-            if (hashAlgorithm == null)
-            {
-                Logger.Error("No appropriate hashing algorithm found.");
-            }
-
-            var codeHash = hashAlgorithm.HashData(
-                CryptographicBuffer.CreateFromByteArray(
-                    Encoding.UTF8.GetBytes(accessToken)));
-
-            byte[] atHashArray;
-            CryptographicBuffer.CopyToByteArray(codeHash, out atHashArray);
-
-            byte[] leftPart = new byte[signingAlgorithmBits/16];
-            Array.Copy(atHashArray, leftPart, signingAlgorithmBits / 16);
-
-            var leftPartB64 = Base64Url.Encode(leftPart);
-
-            var match = leftPartB64.Equals(atHash);
-
-            if (!match)
-            {
-                Logger.Error($"access token hash ({leftPartB64}) does not match at_hash from token ({atHash})");
-            }
-
-            return match;
-        }
-
-        private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
-        {
-            var client = await GetTokenClientAsync();
-
-            var tokenResult = await client.RequestAuthorizationCodeAsync(
-                code,
-                state.RedirectUri,
-                codeVerifier: state.CodeVerifier);
-
-            return tokenResult;
         }
 
         public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
@@ -440,28 +188,25 @@ namespace IdentityModel.OidcClient
             {
                 return new UserInfoResult
                 {
-                    Success = false,
                     Error = userInfoResponse.ErrorMessage
                 };
             }
 
             return new UserInfoResult
             {
-                Success = true,
                 Claims = userInfoResponse.Claims.Select(c => new Claim(c.Item1, c.Item2)).ToClaims()
             };
         }
 
         public async Task<RefreshTokenResult> RefreshTokenAsync(string refreshToken)
         {
-            var client = await GetTokenClientAsync();
+            var client = await TokenClientFactory.CreateAsync(_options);
             var response = await client.RequestRefreshTokenAsync(refreshToken);
 
             if (response.IsError)
             {
                 return new RefreshTokenResult
                 {
-                    Success = false,
                     Error = response.Error
                 };
             }
@@ -469,7 +214,6 @@ namespace IdentityModel.OidcClient
             {
                 return new RefreshTokenResult
                 {
-                    Success = true,
                     AccessToken = response.AccessToken,
                     RefreshToken = response.RefreshToken,
                     ExpiresIn = (int)response.ExpiresIn
@@ -490,51 +234,6 @@ namespace IdentityModel.OidcClient
             Logger.LogClaims(claims);
 
             return claims;
-        }
-
-        private IHashAlgorithmProvider GetHashAlgorithm(int signingAlgorithmBits)
-        {
-            Logger.Debug($"determining hash algorithm for {signingAlgorithmBits} bits");
-
-            switch (signingAlgorithmBits)
-            {
-                case 256:
-                    Logger.Debug("SHA256");
-                    return HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha256);
-                case 384:
-                    Logger.Debug("SHA384");
-                    return HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha384);
-                case 512:
-                    Logger.Debug("SHA512");
-                    return HashAlgorithmProvider.OpenAlgorithm(HashAlgorithm.Sha512);
-                default:
-                    return null;
-            }
-        }
-
-        private async Task<TokenClient> GetTokenClientAsync()
-        {
-            if (_tokenClient == null)
-            {
-                var info = await _options.GetProviderInformationAsync().ConfigureAwait(false);
-                var handler = _options.BackchannelHandler ?? new HttpClientHandler();
-
-                TokenClient tokenClient;
-                if (_options.ClientSecret.IsMissing())
-                {
-                    tokenClient = new TokenClient(info.TokenEndpoint, _options.ClientId, handler);
-                }
-                else
-                {
-                    tokenClient = new TokenClient(info.TokenEndpoint, _options.ClientId, _options.ClientSecret, handler, _options.TokenClientAuthenticationStyle);
-                }
-
-                tokenClient.Timeout = _options.BackchannelTimeout;
-
-                _tokenClient = tokenClient;
-            }
-
-            return _tokenClient;
         }
     }
 }
