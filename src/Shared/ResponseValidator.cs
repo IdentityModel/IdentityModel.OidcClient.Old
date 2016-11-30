@@ -65,6 +65,7 @@ namespace IdentityModel.OidcClient
             var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
             if (tokenResponse.IsError || tokenResponse.IsHttpError)
             {
+                Logger.Error(result.Error);
                 result.Error = tokenResponse.Error;
                 return result;
             }
@@ -183,6 +184,7 @@ namespace IdentityModel.OidcClient
                 Logger.Error($"nonce ({nonce}) does not match nonce from token ({tokenNonce})");
             }
 
+            Logger.Debug("success");
             return match;
         }
 
@@ -220,6 +222,7 @@ namespace IdentityModel.OidcClient
                 Logger.Error($"code hash ({leftPartB64}) does not match c_hash from token ({cHash})");
             }
 
+            Logger.Debug("success");
             return match;
         }
 
@@ -258,11 +261,14 @@ namespace IdentityModel.OidcClient
                 Logger.Error($"access token hash ({leftPartB64}) does not match at_hash from token ({atHash})");
             }
 
+            Logger.Debug("success");
             return match;
         }
 
         private async Task<TokenResponse> RedeemCodeAsync(string code, AuthorizeState state)
         {
+            Logger.Debug("Redeeming authorization code");
+
             var client = await GetTokenClientAsync();
 
             var tokenResult = await client.RequestAuthorizationCodeAsync(

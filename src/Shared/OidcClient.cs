@@ -112,6 +112,8 @@ namespace IdentityModel.OidcClient
 
             if (!validationResult.Success)
             {
+                Logger.Error("Error validating response: " + validationResult.Error);
+
                 return new LoginResult
                 {
                     Error = validationResult.Error
@@ -123,7 +125,7 @@ namespace IdentityModel.OidcClient
 
         private async Task<LoginResult> ProcessClaimsAsync(ResponseValidationResult result)
         {
-            Logger.Debug("ProcessClaimsAsync");
+            Logger.Debug("Processing claims");
 
             // get profile if enabled
             if (_options.LoadProfile)
