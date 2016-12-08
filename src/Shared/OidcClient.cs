@@ -168,6 +168,10 @@ namespace IdentityModel.OidcClient
         public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
         {
             var providerInfo = await _options.GetProviderInformationAsync();
+
+            if (accessToken.IsMissing()) throw new ArgumentNullException(nameof(accessToken));
+            if (providerInfo.UserInfoEndpoint.IsMissing()) throw new InvalidOperationException("No userinfo endpoint specified");
+            
             var handler = _options.BackchannelHandler ?? new HttpClientHandler();
 
             var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken, handler);
