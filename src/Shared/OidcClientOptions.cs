@@ -6,6 +6,7 @@ using IdentityModel.OidcClient.IdentityTokenValidation;
 using IdentityModel.OidcClient.WebView;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -163,6 +164,12 @@ namespace IdentityModel.OidcClient
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
             if (string.IsNullOrWhiteSpace(scope)) throw new ArgumentNullException(nameof(scope));
             if (string.IsNullOrWhiteSpace(redirectUri)) throw new ArgumentNullException(nameof(redirectUri));
+
+            // make sure the scopes contain openid
+            if (!scope.FromSpaceSeparatedString().Contains("openid"))
+            {
+                throw new ArgumentException("Scope must include openid", nameof(scope));
+            }
 
             ClientId = clientId;
             ClientSecret = clientSecret;
