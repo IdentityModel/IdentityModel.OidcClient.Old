@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using PCLCrypto;
 using static PCLCrypto.WinRTCrypto;
-using System.Net.Http;
 using IdentityModel.OidcClient.Infrastructure;
 
 namespace IdentityModel.OidcClient
@@ -27,14 +26,14 @@ namespace IdentityModel.OidcClient
             Logger.Debug("Validate hybrid flow response");
             var result = new ResponseValidationResult();
 
-            if (string.IsNullOrEmpty(authorizeResponse.IdentityToken))
+            if (authorizeResponse.IdentityToken.IsMissing())
             {
                 result.Error = "Missing identity token";
                 Logger.Error(result.Error);
 
                 return result;
             }
-
+            
             var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
             if (!validationResult.Success)
             {

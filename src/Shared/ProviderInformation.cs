@@ -15,6 +15,9 @@ using System.Linq;
 
 namespace IdentityModel.OidcClient
 {
+    /// <summary>
+    /// Information about an OpenID Connect provider
+    /// </summary>
     public class ProviderInformation
     {
         private static ILog Logger = LogProvider.For<ProviderInformation>();

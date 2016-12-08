@@ -12,20 +12,39 @@ using static PCLCrypto.WinRTCrypto;
 
 namespace IdentityModel.OidcClient
 {
+    /// <summary>
+    /// Creates an authorize request and coordinates a web view
+    /// </summary>
     public class AuthorizeClient
     {
         private readonly OidcClientOptions _options;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthorizeClient"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
         public AuthorizeClient(OidcClientOptions options)
         {
             _options = options;
         }
 
+        /// <summary>
+        /// Prepares the authorize request.
+        /// </summary>
+        /// <param name="extaParameters">The exta parameters.</param>
+        /// <returns>Authorize state</returns>
         public async Task<AuthorizeState> PrepareAuthorizeAsync(object extaParameters = null)
         {
             return await CreateAuthorizeStateAsync(extaParameters);
         }
 
+        /// <summary>
+        /// Starts an authorize request using a browser.
+        /// </summary>
+        /// <param name="trySilent">if set to <c>true</c> try a silent request.</param>
+        /// <param name="extraParameters">The extra parameters.</param>
+        /// <returns>The authorize result</returns>
+        /// <exception cref="System.InvalidOperationException">No web view configured.</exception>
         public async Task<AuthorizeResult> AuthorizeAsync(bool trySilent = false, object extraParameters = null)
         {
             if (_options.WebView == null)
@@ -63,6 +82,17 @@ namespace IdentityModel.OidcClient
             return result;
         }
 
+        /// <summary>
+        /// Starts an end_session request using a browser.
+        /// </summary>
+        /// <param name="identityToken">The identity token.</param>
+        /// <param name="trySilent">if set to <c>true</c> try a silent request.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">
+        /// No web view defined.
+        /// or
+        /// no endsession_endpoint defined
+        /// </exception>
         public async Task EndSessionAsync(string identityToken = null, bool trySilent = true)
         {
             if (_options.WebView == null)

@@ -12,6 +12,9 @@ using IdentityModel.OidcClient.Infrastructure;
 
 namespace IdentityModel.OidcClient
 {
+    /// <summary>
+    /// OpenID Connect client
+    /// </summary>
     public class OidcClient
     {
         private static readonly ILog Logger = LogProvider.For<OidcClient>();
@@ -20,11 +23,21 @@ namespace IdentityModel.OidcClient
         private readonly OidcClientOptions _options;
         private readonly ResponseValidator _validator;
 
+        /// <summary>
+        /// Gets the options.
+        /// </summary>
+        /// <value>
+        /// The options.
+        /// </value>
         public OidcClientOptions Options
         {
             get { return _options; }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OidcClient"/> class.
+        /// </summary>
+        /// <param name="options">The options.</param>
         public OidcClient(OidcClientOptions options)
         {
             _authorizeClient = new AuthorizeClient(options);
@@ -33,6 +46,12 @@ namespace IdentityModel.OidcClient
             _options = options;
         }
 
+        /// <summary>
+        /// Starts an authentication request.
+        /// </summary>
+        /// <param name="trySilent">if set to <c>true</c> a silent login attempt is made.</param>
+        /// <param name="extraParameters">extra parameters to send to the authorize endpoint.</param>
+        /// <returns></returns>
         public async Task<LoginResult> LoginAsync(bool trySilent = false, object extraParameters = null)
         {
             Logger.Debug("LoginAsync");
@@ -47,6 +66,11 @@ namespace IdentityModel.OidcClient
             return await ValidateResponseAsync(authorizeResult.Data, authorizeResult.State);
         }
 
+        /// <summary>
+        /// Prepares an authentication request.
+        /// </summary>
+        /// <param name="extraParameters">extra parameters to send to the authorize endpoint.</param>
+        /// <returns>An authorize state object that can be later used to validate the response</returns>
         public async Task<AuthorizeState> PrepareLoginAsync(object extraParameters = null)
         {
             Logger.Debug("PrepareLoginAsync");
@@ -54,11 +78,24 @@ namespace IdentityModel.OidcClient
             return await _authorizeClient.PrepareAuthorizeAsync(extraParameters);
         }
 
+        /// <summary>
+        /// Starts and end session request.
+        /// </summary>
+        /// <param name="identityToken">An identity token to send as a hint.</param>
+        /// <param name="trySilent">if set to <c>true</c> a silent end session attempt is made.</param>
+        /// <returns></returns>
         public Task LogoutAsync(string identityToken = null, bool trySilent = true)
         {
             return _authorizeClient.EndSessionAsync(identityToken, trySilent);
         }
 
+        /// <summary>
+        /// Validates the response.
+        /// </summary>
+        /// <param name="data">The response data.</param>
+        /// <param name="state">The state.</param>
+        /// <returns>Result of the login response validation</returns>
+        /// <exception cref="System.InvalidOperationException">Invalid authentication style</exception>
         public async Task<LoginResult> ValidateResponseAsync(string data, AuthorizeState state)
         {
             Logger.Debug("Validate authorize response");
@@ -123,6 +160,62 @@ namespace IdentityModel.OidcClient
             return await ProcessClaimsAsync(validationResult);
         }
 
+        /// <summary>
+        /// Gets the user claims from the userinfo endpoint.
+        /// </summary>
+        /// <param name="accessToken">The access token.</param>
+        /// <returns>User claims</returns>
+        public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
+        {
+            var providerInfo = await _options.GetProviderInformationAsync();
+            var handler = _options.BackchannelHandler ?? new HttpClientHandler();
+
+            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken, handler);
+            userInfoClient.Timeout = _options.BackchannelTimeout;
+
+            var userInfoResponse = await userInfoClient.GetAsync();
+            if (userInfoResponse.IsError)
+            {
+                return new UserInfoResult
+                {
+                    Error = userInfoResponse.ErrorMessage
+                };
+            }
+
+            return new UserInfoResult
+            {
+                Claims = userInfoResponse.Claims.Select(c => new Claim(c.Item1, c.Item2)).ToClaims()
+            };
+        }
+
+        /// <summary>
+        /// Startes a refresh token requeszt.
+        /// </summary>
+        /// <param name="refreshToken">The refresh token.</param>
+        /// <returns>A refresh token result</returns>
+        public async Task<RefreshTokenResult> RefreshTokenAsync(string refreshToken)
+        {
+            var client = await TokenClientFactory.CreateAsync(_options);
+            var response = await client.RequestRefreshTokenAsync(refreshToken);
+
+            if (response.IsError)
+            {
+                return new RefreshTokenResult
+                {
+                    Error = response.Error
+                };
+            }
+            else
+            {
+                return new RefreshTokenResult
+                {
+                    AccessToken = response.AccessToken,
+                    RefreshToken = response.RefreshToken,
+                    ExpiresIn = (int)response.ExpiresIn
+                };
+            }
+        }
+
         private async Task<LoginResult> ProcessClaimsAsync(ResponseValidationResult result)
         {
             Logger.Debug("Processing claims");
@@ -176,53 +269,7 @@ namespace IdentityModel.OidcClient
 
             return loginResult;
         }
-
-        public async Task<UserInfoResult> GetUserInfoAsync(string accessToken)
-        {
-            var providerInfo = await _options.GetProviderInformationAsync();
-            var handler = _options.BackchannelHandler ?? new HttpClientHandler();
-
-            var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken, handler);
-            userInfoClient.Timeout = _options.BackchannelTimeout;
-
-            var userInfoResponse = await userInfoClient.GetAsync();
-            if (userInfoResponse.IsError)
-            {
-                return new UserInfoResult
-                {
-                    Error = userInfoResponse.ErrorMessage
-                };
-            }
-
-            return new UserInfoResult
-            {
-                Claims = userInfoResponse.Claims.Select(c => new Claim(c.Item1, c.Item2)).ToClaims()
-            };
-        }
-
-        public async Task<RefreshTokenResult> RefreshTokenAsync(string refreshToken)
-        {
-            var client = await TokenClientFactory.CreateAsync(_options);
-            var response = await client.RequestRefreshTokenAsync(refreshToken);
-
-            if (response.IsError)
-            {
-                return new RefreshTokenResult
-                {
-                    Error = response.Error
-                };
-            }
-            else
-            {
-                return new RefreshTokenResult
-                {
-                    AccessToken = response.AccessToken,
-                    RefreshToken = response.RefreshToken,
-                    ExpiresIn = (int)response.ExpiresIn
-                };
-            }
-        }
-
+        
         private Claims FilterClaims(Claims claims)
         {
             Logger.Debug("filtering claims");
