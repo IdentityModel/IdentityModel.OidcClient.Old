@@ -132,6 +132,18 @@ namespace IdentityModel.OidcClient
                 throw new InvalidOperationException(error);
             }
 
+            // validate issuer name against authority, if requested
+            if (validateIssuerName)
+            {
+                if (!string.Equals(authority.RemoveTrailingSlash(), info.IssuerName.RemoveTrailingSlash(), StringComparison.OrdinalIgnoreCase))
+                {
+                    var error = $"issuer name of '{info.IssuerName}' does not match authority '{authority}'";
+                
+                    Logger.Error(error);
+                    throw new InvalidOperationException(error);
+                }
+            }
+
             // authorize endpoint is required
             if (doc.ContainsKey("authorization_endpoint"))
             {
