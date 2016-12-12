@@ -4,11 +4,8 @@
 
 namespace IdentityModel.OidcClient
 {
-    public class RefreshTokenResult
+    public class RefreshTokenResult : Result
     {
-        public bool Success { get; set; }
-        public string Error { get; set; }
-
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }
         public int ExpiresIn { get; set; }
