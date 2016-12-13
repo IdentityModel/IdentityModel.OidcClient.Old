@@ -37,7 +37,6 @@ namespace IdentityModel.OidcClient
             {
                 return new IdentityTokenValidationResult
                 {
-                    Success = false,
                     Error = response.ReasonPhrase
                 };
             }
@@ -46,7 +45,6 @@ namespace IdentityModel.OidcClient
 
             return new IdentityTokenValidationResult
             {
-                Success = true,
                 Claims = json.ToClaims(),
                 SignatureAlgorithm = "RS256"
             };

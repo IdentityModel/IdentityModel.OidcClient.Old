@@ -144,26 +144,24 @@ namespace IdentityModel.OidcClient
 
             // validate audience
             var audience = claims.FindFirst(JwtClaimTypes.Audience)?.Value ?? "";
-            if (!string.Equals(_options.ClientId, audience))
+            if (!string.Equals(_options.ClientId, audience, StringComparison.Ordinal))
             {
                 Logger.Error($"client id ({_options.ClientId}) does not match audience ({audience})");
 
                 return new IdentityTokenValidationResult
                 {
-                    Success = false,
                     Error = "invalid audience"
                 };
             }
 
             // validate issuer
             var issuer = claims.FindFirst(JwtClaimTypes.Issuer)?.Value ?? "";
-            if (!string.Equals(providerInfo.IssuerName, issuer))
+            if (!string.Equals(providerInfo.IssuerName, issuer, StringComparison.Ordinal))
             {
                 Logger.Error($"configured issuer ({providerInfo.IssuerName}) does not match token issuer ({issuer}");
 
                 return new IdentityTokenValidationResult
                 {
-                    Success = false,
                     Error = "invalid issuer"
                 };
             }

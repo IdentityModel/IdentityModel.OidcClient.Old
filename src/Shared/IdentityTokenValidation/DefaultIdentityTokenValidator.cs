@@ -11,11 +11,20 @@ using IdentityModel.OidcClient.Logging;
 using IdentityModel.Jwt;
 using JosePCL.Serialization;
 using PCLCrypto;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace IdentityModel.OidcClient.IdentityTokenValidation
 {
     public class DefaultIdentityTokenValidator : IIdentityTokenValidator
     {
+        private IEnumerable<string> _supportedAlgorithms = new List<string>
+        {
+            OidcConstants.Algorithms.Asymmetric.RS256,
+            OidcConstants.Algorithms.Asymmetric.RS384,
+            OidcConstants.Algorithms.Asymmetric.RS512
+        };
+
         private static readonly ILog Logger = LogProvider.For<DefaultIdentityTokenValidator>();
 
         public TimeSpan ClockSkew { get; set; } = TimeSpan.FromMinutes(5);
@@ -25,7 +34,7 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             Logger.Debug("starting identity token validation");
             Logger.Debug($"identity token: {identityToken}");
 
-            var fail = new IdentityTokenValidationResult { Success = false };
+            var fail = new IdentityTokenValidationResult();
 
             ValidatedToken token;
             try
@@ -54,7 +63,7 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             var audience = token.Payload["aud"].ToString();
             Logger.Debug($"audience: {audience}");
 
-            if (issuer != providerInformation.IssuerName)
+            if (!string.Equals(issuer, providerInformation.IssuerName, StringComparison.Ordinal))
             {
                 fail.Error = "Invalid issuer name";
                 Logger.Error(fail.Error);
@@ -62,7 +71,7 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
                 return Task.FromResult(fail);
             }
 
-            if (audience != clientId)
+            if (!string.Equals(audience, clientId, StringComparison.Ordinal))
             {
                 fail.Error = "Invalid audience";
                 Logger.Error(fail.Error);
@@ -103,7 +112,6 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
 
             return Task.FromResult(new IdentityTokenValidationResult
             {
-                Success = true,
                 Claims = token.Payload.ToClaims(),
                 SignatureAlgorithm = token.Algorithm
             });
@@ -135,7 +143,24 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             var header = JObject.Parse(parts.First().Utf8);
 
             var kid = header["kid"].ToString();
+            if (kid.IsMissing())
+            {
+                var error = "JWT has no kid";
+
+                Logger.Error(error);
+                return new ValidatedToken { Error = error };
+            }
+            
             var alg = header["alg"].ToString();
+
+            if (!_supportedAlgorithms.Contains(alg))
+            {
+                var error = $"JWT uses an unsupported algorithm: {alg}";
+
+                Logger.Error(error);
+                return new ValidatedToken { Error = error };
+            }
+
             Logger.Debug("Token signing algorithm: " + alg);
 
             var key = LoadKey(keySet, kid);
@@ -143,7 +168,6 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
             {
                 return new ValidatedToken
                 {
-                    Success = false,
                     Error = "No key found that matches the kid of the token"
                 };
             }
@@ -155,7 +179,6 @@ namespace IdentityModel.OidcClient.IdentityTokenValidation
 
             return new ValidatedToken
             {
-                Success = true,
                 KeyId = kid,
                 Algorithm = alg,
                 Payload = payload
