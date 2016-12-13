@@ -110,7 +110,7 @@ namespace IdentityModel.OidcClient
             var response = await client.GetAsync(url).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                var error = "an error occurred while retrieving the discovery document: " +
+                var error = $"an error occurred while retrieving the discovery document ({url}): " +
                     await FormatErrorAsync(response).ConfigureAwait(false);
 
                 Logger.Error(error);
@@ -211,7 +211,7 @@ namespace IdentityModel.OidcClient
                 var jwksResponse = await client.GetAsync(jwksUri).ConfigureAwait(false);
                 if (!jwksResponse.IsSuccessStatusCode)
                 {
-                    var error = "an error occurred while retrieving the JWKS document: " +
+                    var error = $"an error occurred while retrieving the JWKS document ({jwksUri}) : " +
                         await FormatErrorAsync(jwksResponse).ConfigureAwait(false);
 
                     Logger.Error(error);

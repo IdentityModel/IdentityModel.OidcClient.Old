@@ -146,7 +146,7 @@ namespace IdentityModel.OidcClient
         /// <value>
         /// The filtered claims.
         /// </value>
-        public IList<string> FilteredClaims { get; set; } = new List<string>
+        public ICollection<string> FilteredClaims { get; set; } = new HashSet<string>
         {
             JwtClaimTypes.Issuer,
             JwtClaimTypes.Expiration,
