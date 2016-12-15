@@ -130,7 +130,6 @@ namespace IdentityModel.OidcClient
         {
             var state = new AuthorizeState();
 
-            state.State = RNG.CreateUniqueId();
             state.Nonce = RNG.CreateUniqueId();
             state.State = RNG.CreateUniqueId();
             state.RedirectUri = _options.RedirectUri;
@@ -179,7 +178,6 @@ namespace IdentityModel.OidcClient
                 scope: _options.Scope,
                 redirectUri: state.RedirectUri,
                 responseMode: _options.UseFormPost ? OidcConstants.ResponseModes.FormPost : null,
-                state: state.State,
                 nonce: state.Nonce,
                 state: state.State,
                 codeChallenge: codeChallenge,
