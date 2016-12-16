@@ -100,9 +100,12 @@ namespace IdentityModel.OidcClient
         /// <returns>Provider information</returns>
         /// <exception cref="System.InvalidOperationException">
         /// </exception>
-        public static async Task<ProviderInformation> LoadFromMetadataAsync(string authority, bool validateIssuerName)
+        public static async Task<ProviderInformation> LoadFromMetadataAsync(string authority, bool validateIssuerName = true, HttpMessageHandler innerHandler = null, int timeout = 30)
         {
-            var client = new HttpClient();
+            var handler = innerHandler ?? new HttpClientHandler();
+            var client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromSeconds(timeout);
+
             var url = authority.EnsureTrailingSlash() + ".well-known/openid-configuration";
 
             Logger.Debug($"fetching discovery document from: {url}");

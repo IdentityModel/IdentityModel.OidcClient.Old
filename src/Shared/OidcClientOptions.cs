@@ -215,7 +215,7 @@ namespace IdentityModel.OidcClient
         {
             if (string.IsNullOrWhiteSpace(authority)) throw new ArgumentNullException(nameof(authority));
 
-            _providerInfo = new Lazy<Task<ProviderInformation>>(async () => await ProviderInformation.LoadFromMetadataAsync(authority, ValidateIssuerName));
+            _providerInfo = new Lazy<Task<ProviderInformation>>(async () => await ProviderInformation.LoadFromMetadataAsync(authority, ValidateIssuerName, BackchannelHandler, (int)BackchannelTimeout.TotalSeconds));
         }
 
         /// <summary>
