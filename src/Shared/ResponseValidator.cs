@@ -151,7 +151,7 @@ namespace IdentityModel.OidcClient
             };
         }
 
-        public async Task<TokenResponseValidationResult> ValidateTokenResponse(TokenResponse response)
+        public async Task<TokenResponseValidationResult> ValidateTokenResponse(TokenResponse response, bool requireIdentityToken = true)
         {
             Logger.Debug("Validating token response");
             var result = new TokenResponseValidationResult();
@@ -165,39 +165,47 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            // token response must contain an identity token (openid scope is mandatory)
-            if (response.IdentityToken.IsMissing())
+            if (requireIdentityToken)
             {
-                result.Error = "identity token is missing on token response";
-                Logger.Error(result.Error);
+                // token response must contain an identity token (openid scope is mandatory)
+                if (response.IdentityToken.IsMissing())
+                {
+                    result.Error = "identity token is missing on token response";
+                    Logger.Error(result.Error);
 
-                return result;
+                    return result;
+                }
             }
 
-            // identity token must be valid
-            var validationResult = await ValidateIdentityTokenAsync(response.IdentityToken);
-            if (!validationResult.Success)
-            {
-                result.Error = validationResult.Error ?? "Identity token validation error";
-                Logger.Error(result.Error);
+            if (response.IdentityToken.IsPresent())
+            { 
+                // if identity token is present, it must be valid
+                var validationResult = await ValidateIdentityTokenAsync(response.IdentityToken);
+                if (!validationResult.Success)
+                {
+                    result.Error = validationResult.Error ?? "Identity token validation error";
+                    Logger.Error(result.Error);
 
-                return result;
+                    return result;
+                }
+
+                // if at_hash is present, it must be valid
+                var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
+                if (!ValidateAccessTokenHash(response.AccessToken, signingAlgorithmBits, validationResult.Claims))
+                {
+                    result.Error = "Invalid access token hash";
+                    Logger.Error(result.Error);
+
+                    return result;
+                }
+
+                return new TokenResponseValidationResult
+                {
+                    IdentityTokenValidationResult = validationResult
+                };
             }
 
-            // if at_hash is present, it must be valid
-            var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
-            if (!ValidateAccessTokenHash(response.AccessToken, signingAlgorithmBits, validationResult.Claims))
-            {
-                result.Error = "Invalid access token hash";
-                Logger.Error(result.Error);
-
-                return result;
-            }
-
-            return new TokenResponseValidationResult
-            {
-                IdentityTokenValidationResult = validationResult
-            };
+            return new TokenResponseValidationResult();
         }
 
         private async Task<IdentityTokenValidationResult> ValidateIdentityTokenAsync(string idToken)

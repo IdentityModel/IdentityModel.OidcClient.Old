@@ -99,7 +99,7 @@ namespace IdentityModel.OidcClient
         public async Task<LoginResult> ValidateResponseAsync(string data, AuthorizeState state)
         {
             Logger.Debug("Validate authorize response");
-            
+
             var response = new AuthorizeResponse(data);
 
             if (response.IsError)
@@ -171,7 +171,7 @@ namespace IdentityModel.OidcClient
 
             if (accessToken.IsMissing()) throw new ArgumentNullException(nameof(accessToken));
             if (providerInfo.UserInfoEndpoint.IsMissing()) throw new InvalidOperationException("No userinfo endpoint specified");
-            
+
             var handler = _options.BackchannelHandler ?? new HttpClientHandler();
 
             var userInfoClient = new UserInfoClient(new Uri(providerInfo.UserInfoEndpoint), accessToken, handler);
@@ -204,20 +204,22 @@ namespace IdentityModel.OidcClient
 
             if (response.IsError)
             {
-                return new RefreshTokenResult
-                {
-                    Error = response.Error
-                };
+                return new RefreshTokenResult { Error = response.Error };
             }
-            else
+
+            // validate token response
+            var validationResult = await _validator.ValidateTokenResponse(response, requireIdentityToken: false);
+            if (!validationResult.Success)
             {
-                return new RefreshTokenResult
-                {
-                    AccessToken = response.AccessToken,
-                    RefreshToken = response.RefreshToken,
-                    ExpiresIn = (int)response.ExpiresIn
-                };
+                return new RefreshTokenResult { Error = validationResult.Error };
             }
+
+            return new RefreshTokenResult
+            {
+                AccessToken = response.AccessToken,
+                RefreshToken = response.RefreshToken,
+                ExpiresIn = (int)response.ExpiresIn
+            };
         }
 
         private async Task<LoginResult> ProcessClaimsAsync(ResponseValidationResult result)
@@ -273,7 +275,7 @@ namespace IdentityModel.OidcClient
 
             return loginResult;
         }
-        
+
         private Claims FilterClaims(Claims claims)
         {
             Logger.Debug("filtering claims");
