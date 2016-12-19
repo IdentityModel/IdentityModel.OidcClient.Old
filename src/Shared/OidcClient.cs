@@ -193,7 +193,7 @@ namespace IdentityModel.OidcClient
         }
 
         /// <summary>
-        /// Startes a refresh token requeszt.
+        /// Starts a refresh token request.
         /// </summary>
         /// <param name="refreshToken">The refresh token.</param>
         /// <returns>A refresh token result</returns>
