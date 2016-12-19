@@ -46,6 +46,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Results\RefreshTokenResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\ResponseValidationResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\Result.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Results\TokenResponseValidationResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Results\UserInfoResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\DisplayMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WebView\HiddenModeFailedEventArgs.cs" />

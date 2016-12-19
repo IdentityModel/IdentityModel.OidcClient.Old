@@ -26,6 +26,11 @@ namespace IdentityModel.OidcClient
             Logger.Debug("Validate hybrid flow response");
             var result = new ResponseValidationResult();
 
+            //////////////////////////////////////////////////////
+            // validate front-channel response
+            //////////////////////////////////////////////////////
+
+            // id_token must be present
             if (authorizeResponse.IdentityToken.IsMissing())
             {
                 result.Error = "Missing identity token";
@@ -34,6 +39,7 @@ namespace IdentityModel.OidcClient
                 return result;
             }
             
+            // id_token must be valid
             var validationResult = await ValidateIdentityTokenAsync(authorizeResponse.IdentityToken);
             if (!validationResult.Success)
             {
@@ -43,6 +49,7 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
+            // nonce must be valid
             if (!ValidateNonce(state.Nonce, validationResult.Claims))
             {
                 result.Error = "Invalid nonce";
@@ -51,6 +58,7 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
+            // if c_hash is present, it must be valid
             var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
             if (!ValidateAuthorizationCodeHash(authorizeResponse.Code, signingAlgorithmBits, validationResult.Claims))
             {
@@ -60,12 +68,24 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
+            //////////////////////////////////////////////////////
+            // process back-channel response
+            //////////////////////////////////////////////////////
+
             // redeem code for tokens
             var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
             if (tokenResponse.IsError || tokenResponse.IsHttpError)
             {
                 Logger.Error(result.Error);
                 result.Error = tokenResponse.Error;
+                return result;
+            }
+
+            // validate token response
+            var tokenResponseValidationResult = await ValidateTokenResponse(tokenResponse);
+            if (!tokenResponseValidationResult.Success)
+            {
+                result.Error = tokenResponseValidationResult.Error;
                 return result;
             }
 
@@ -73,15 +93,39 @@ namespace IdentityModel.OidcClient
             {
                 AuthorizeResponse = authorizeResponse,
                 TokenResponse = tokenResponse,
-                Claims = validationResult.Claims
+                Claims = tokenResponseValidationResult.IdentityTokenValidationResult.Claims
             };
         }
-
 
         public async Task<ResponseValidationResult> ValidateCodeFlowResponseAsync(AuthorizeResponse authorizeResponse, AuthorizeState state)
         {
             Logger.Debug("Validate code flow response");
             var result = new ResponseValidationResult();
+
+            //////////////////////////////////////////////////////
+            // validate front-channel response
+            //////////////////////////////////////////////////////
+
+            // code must be present
+            if (authorizeResponse.Code.IsMissing())
+            {
+                result.Error = "code is missing";
+                Logger.Error(result.Error);
+
+                return result;
+            }
+
+            if (!string.Equals(authorizeResponse.State, state.State, StringComparison.Ordinal))
+            {
+                result.Error = "invalid state";
+                Logger.Error(result.Error);
+
+                return result;
+            }
+
+            //////////////////////////////////////////////////////
+            // process back-channel response
+            //////////////////////////////////////////////////////
 
             // redeem code for tokens
             var tokenResponse = await RedeemCodeAsync(authorizeResponse.Code, state);
@@ -91,15 +135,47 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            if (tokenResponse.IdentityToken.IsMissing())
+            // validate token response
+            var tokenResponseValidationResult = await ValidateTokenResponse(tokenResponse);
+            if (!tokenResponseValidationResult.Success)
             {
-                result.Error = "Missing identity token";
+                result.Error = tokenResponseValidationResult.Error;
+                return result;
+            }
+
+            return new ResponseValidationResult
+            {
+                AuthorizeResponse = authorizeResponse,
+                TokenResponse = tokenResponse,
+                Claims = tokenResponseValidationResult.IdentityTokenValidationResult.Claims
+            };
+        }
+
+        public async Task<TokenResponseValidationResult> ValidateTokenResponse(TokenResponse response)
+        {
+            Logger.Debug("Validating token response");
+            var result = new TokenResponseValidationResult();
+
+            // token response must contain an access token
+            if (response.AccessToken.IsMissing())
+            {
+                result.Error = "access token is missing on token response";
                 Logger.Error(result.Error);
 
                 return result;
             }
 
-            var validationResult = await ValidateIdentityTokenAsync(tokenResponse.IdentityToken);
+            // token response must contain an identity token (openid scope is mandatory)
+            if (response.IdentityToken.IsMissing())
+            {
+                result.Error = "identity token is missing on token response";
+                Logger.Error(result.Error);
+
+                return result;
+            }
+
+            // identity token must be valid
+            var validationResult = await ValidateIdentityTokenAsync(response.IdentityToken);
             if (!validationResult.Success)
             {
                 result.Error = validationResult.Error ?? "Identity token validation error";
@@ -108,8 +184,9 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
+            // if at_hash is present, it must be valid
             var signingAlgorithmBits = int.Parse(validationResult.SignatureAlgorithm.Substring(2));
-            if (!ValidateAccessTokenHash(tokenResponse.AccessToken, signingAlgorithmBits, validationResult.Claims))
+            if (!ValidateAccessTokenHash(response.AccessToken, signingAlgorithmBits, validationResult.Claims))
             {
                 result.Error = "Invalid access token hash";
                 Logger.Error(result.Error);
@@ -117,11 +194,9 @@ namespace IdentityModel.OidcClient
                 return result;
             }
 
-            return new ResponseValidationResult
+            return new TokenResponseValidationResult
             {
-                AuthorizeResponse = authorizeResponse,
-                TokenResponse = tokenResponse,
-                Claims = validationResult.Claims
+                IdentityTokenValidationResult = validationResult
             };
         }
 

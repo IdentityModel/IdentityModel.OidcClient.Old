@@ -4,9 +4,8 @@
 
 namespace IdentityModel.OidcClient
 {
-    public class Result
+    class TokenResponseValidationResult : Result
     {
-        public bool Success => string.IsNullOrWhiteSpace(Error);
-        public string Error { get; set; }
+        public IdentityTokenValidationResult IdentityTokenValidationResult { get; set; }
     }
 }
