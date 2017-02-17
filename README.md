@@ -1,3 +1,6 @@
+**important** This repo is not maintained anymore. This version of OidcClient is based on the PCL (portable class library) technology, which is not encouraged to use anymore. [OidcClient2](https://github.com/IdentityModel/IdentityModel.OidcClient2) is the recommended successor, and is based on netstandard.
+
+
 # OpenID Connect Client Library for native Applications
 
 OidcClient is a portable library (Desktop .NET, UWP, Xamarin iOS & Android) that provides a couple of helpers typically needed by native applications
